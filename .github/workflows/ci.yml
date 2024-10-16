@@ -21,7 +21,6 @@ env:
 jobs:
 
   docker-image:
-    if: github.ref_type == 'tag'
     runs-on: ubuntu-latest
     permissions:
       contents: read
