@@ -1,6 +1,6 @@
 ARG CROSS="true"
 ARG DEBIAN_FRONTEND=noninteractive
-ARG OS_IMAGE="debian:24.04"
+ARG OS_IMAGE="debian:bullseye"
 
 
 FROM ${OS_IMAGE} AS base
