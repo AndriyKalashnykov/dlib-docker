@@ -41,8 +41,9 @@ FROM runtime-dev-cross-${CROSS} AS runtime-dev
 
 RUN apt-get update
 RUN apt-get install -y build-essential cmake curl
+RUN apt-get install libopenblas-dev liblapack-dev 
 RUN mkdir /dlib && cd /dlib && curl -sLO http://dlib.net/files/dlib-19.24.tar.bz2 && tar xf dlib-19.24.tar.bz2
-# -DDLIB_PNG_SUPPORT=ON -DDLIB_GIF_SUPPORT=ON -DDLIB_JPEG_SUPPORT=ON -DDLIB_NO_GUI_SUPPORT=ON
+# 
 # https://github.com/imishinist/dlib/blob/master/19.21/buster/Dockerfile
-RUN cd /dlib/dlib-19.24 && mkdir build && cd build && cmake .. && cmake --build . --config Release && make install && rm -rf /dlib \
+RUN cd /dlib/dlib-19.24 && mkdir build && cd build && cmake .. && cmake -DDLIB_PNG_SUPPORT=ON -DDLIB_GIF_SUPPORT=ON -DDLIB_JPEG_SUPPORT=ON -DDLIB_NO_GUI_SUPPORT=ON --build . --config Release && make install && rm -rf /dlib \
     rm dlib-19.24.tar.bz2 dlib-19.24.tar.gz dlib-19.24.tar
