@@ -1,5 +1,5 @@
 # https://hub.docker.com/_/alpine/tags
-FROM --platform=$BUILDPLATFORM alpine:3.20.3  AS base
+FROM alpine:3.20.3  AS base
 
 RUN apk add --no-cache ca-certificates
 
