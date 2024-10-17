@@ -38,7 +38,7 @@ RUN --mount=type=cache,sharing=locked,id=moby-cross-true-aptlib,target=/var/lib/
 
 FROM runtime-dev-cross-${CROSS} AS runtime-dev
 
-ENV DLIB_VERSION 19.24
+ENV DLIB_VERSION=19.24
 
 RUN apt-get update
 RUN apt-get install -y build-essential cmake curl
@@ -46,6 +46,6 @@ RUN apt-get install -y libblas-dev liblapack-dev
 RUN mkdir /dlib && cd /dlib && curl -sLO http://dlib.net/files/dlib-${DLIB_VERSION}.tar.bz2 && tar xf dlib-${DLIB_VERSION}.tar.bz2
 # 
 # https://github.com/imishinist/dlib/blob/master/19.21/buster/Dockerfile
-RUN cd /dlib/dlib-${DLIB_VERSION} && mkdir build && cd build && cmake .. && cmake -DDLIB_PNG_SUPPORT=ON -DDLIB_GIF_SUPPORT=ON -DDLIB_JPEG_SUPPORT=ON -DDLIB_NO_GUI_SUPPORT=ON --build . --config Release && make -j4; && make install && rm -rf /dlib \
+RUN cd /dlib/dlib-${DLIB_VERSION} && mkdir build && cd build && cmake .. && cmake -DDLIB_PNG_SUPPORT=ON -DDLIB_GIF_SUPPORT=ON -DDLIB_JPEG_SUPPORT=ON -DDLIB_NO_GUI_SUPPORT=ON --build . --config Release && make -j4 && make install && rm -rf /dlib \
     apt-get autoremove -y; apt-get clean; rm -rf /var/cache; \
     rm /dlib/dlib-${DLIB_VERSION}.tar.bz2
