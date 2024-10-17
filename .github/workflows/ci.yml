@@ -12,9 +12,7 @@ permissions:
   contents: write
   packages: write
 
-env:
-  # Use docker.io for Docker Hub if empty
-  REGISTRY: ghcr.io
+
 
 jobs:
 
@@ -23,6 +21,8 @@ jobs:
     permissions:
       contents: read
       packages: write
+    env:
+      REGISTRY: ghcr.io  
 
     steps:
 
@@ -48,7 +48,7 @@ jobs:
       - name: Login to image repository
         uses: docker/login-action@v3
         with:
-          registry: $REGISTRY
+          registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GH_ACCESS_TOKEN }}
 
@@ -61,7 +61,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: $REGISTRY/${{ env.OWNER_LC }}/dlib-docker
+          images: ${{ env.REGISTRY }}/${{ env.OWNER_LC }}/dlib-docker
           flavor: latest=true
           tags: |
             type=ref,event=branch
