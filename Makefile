@@ -35,3 +35,10 @@ bdi: ## build dblib image
 rdi: ## run dlib image
 	docker run --rm -v $PWD:/app -w /app -it anriykalashnykov/dblib-docker:latest /bin/bash
 
+
+.PHONY: dt
+dt: ## delete tag
+	rm version.txt
+	git push --delete origin v0.0.1
+	git tag --delete v0.0.1
+
