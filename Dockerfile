@@ -1,13 +1,14 @@
 ARG CROSS="true"
 ARG DEBIAN_FRONTEND=noninteractive
-ARG OS_IMAGE="debian:bullseye"
+ARG OS_IMAGE="debian:bookworm"
 #ARG OS_IMAGE="ubuntu:24.10"
 
 FROM ${OS_IMAGE} AS base
-RUN echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
-ARG APT_MIRROR
-RUN sed -ri "s/(httpredir|deb).debian.org/${APT_MIRROR:-deb.debian.org}/g" /etc/apt/sources.list \
- && sed -ri "s/(security).debian.org/${APT_MIRROR:-security.debian.org}/g" /etc/apt/sources.list
+
+#RUN echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
+#ARG APT_MIRROR
+#RUN sed -ri "s/(httpredir|deb).debian.org/${APT_MIRROR:-deb.debian.org}/g" /etc/apt/sources.list \
+# && sed -ri "s/(security).debian.org/${APT_MIRROR:-security.debian.org}/g" /etc/apt/sources.list
 
 FROM base AS cross-true
 ARG DEBIAN_FRONTEND
