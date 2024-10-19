@@ -29,12 +29,11 @@ bootstrap: ## bootstrap build dblib image
 
 .PHONY: bdi
 bdi: ## build dblib image
-	docker buildx build --load --platform linux/amd64 -f Dockerfile -t anriykalashnykov/dblib-docker:latest .
+	docker build --platform linux/amd64 -f Dockerfile -t anriykalashnykov/dblib-docker:latest .
 
 .PHONY: rdi
 rdi: ## run dlib image
 	docker run --rm -v $PWD:/app -w /app -it anriykalashnykov/dblib-docker:latest /bin/bash
-
 
 .PHONY: dt
 dt: ## delete tag
