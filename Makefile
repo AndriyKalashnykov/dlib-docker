@@ -26,22 +26,21 @@ release: ## create and push a new tag
 bootstrap: ## bootstrap build dblib image
 	docker buildx create --use --platform=linux/arm64,linux/amd64 --name multi-platform-builder
 
-
 .PHONY: bdid
 bdid: ## build debian dblib image
-	docker build --platform linux/amd64 -f Dockerfile.debian -t anriykalashnykov/dblib-docker-debian:latest .
+	docker build --platform linux/amd64 -f Dockerfile.debian -t anriykalashnykov/dblib-docker:latest .
 
 .PHONY: rdid
 rdid: ## run debian dlib image
-	docker run --rm -v $PWD:/app -w /app -it anriykalashnykov/dblib-docker-debian:latest /bin/bash
+	docker run --rm -v $PWD:/app -w /app -it anriykalashnykov/dblib-docker:latest /bin/bash
 
 .PHONY: bdia
 bdia: ## build alpine dblib image
-	docker build --platform linux/amd64 -f Dockerfile.alpine -t anriykalashnykov/dblib-docker-alpine:latest .
+	docker build --platform linux/amd64 -f Dockerfile.alpine -t anriykalashnykov/dblib-docker:latest-alpine .
 
 .PHONY: rdia
 rdia: ## run alpine dlib image
-	docker run --rm -v $PWD:/app -w /app -it anriykalashnykov/dblib-docker-alpine:latest /bin/sh
+	docker run --rm -v $PWD:/app -w /app -it anriykalashnykov/dblib-docker:latest-alpine /bin/sh
 
 .PHONY: dt
 dt: ## delete tag

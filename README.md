@@ -1,2 +1,2 @@
 # dlib-docker
-DLib development environment Docker image
+Docker image with DLib development environment 
