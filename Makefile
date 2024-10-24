@@ -44,7 +44,7 @@ rdia: ## run alpine dlib image
 
 .PHONY: dt
 dt: ## delete tag
-	rm version.txt
-	git push --delete origin v19.24
-	git tag --delete v19.24
+	rm -f version.txt
+	git push --delete origin v19.24.0
+	git tag --delete v19.24.0
 

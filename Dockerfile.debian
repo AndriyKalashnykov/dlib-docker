@@ -59,8 +59,9 @@ RUN cd /dlib/dlib-${DLIB_VERSION} && mkdir build && cd build \
     && cmake --build . --config Release \
     && make -j$(grep -c processor /proc/cpuinfo) \
     && make install \
-    && rm -rf /dlib \
-    && apt-get autoremove -y; apt-get clean; rm -rf /var/cache;
+    && rm -rf /dlib
+
+#    && apt-get autoremove -y; apt-get clean; rm -rf /var/cache;
 
 # Keep the container running
 CMD ["tail", "-f", "/dev/null"]
