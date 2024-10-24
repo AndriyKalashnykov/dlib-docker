@@ -65,13 +65,13 @@ jobs:
             type=ref,event=branch
             type=ref,event=tag
             type=ref,event=pr
-            type=semver,pattern=v{{version}}
+            type=semver,pattern=v{{version}}-debian
           labels: |
             org.opencontainers.image.vendor=Andriy Kalashnykov - andriykalashnykov@gmail.com
             org.opencontainers.image.title=Dlib Debian Docker image
             org.opencontainers.image.description=Dlib Debian Docker image
             org.opencontainers.image.licenses=CC0
-            org.opencontainers.image.version=${{ github.ref_name }}"
+            org.opencontainers.image.version=${{ github.ref_name }}"-debian
             io.artifacthub.package.readme-url=https://raw.githubusercontent.com/AndriyKalashnykov/dlib-docker/main/README.md
             io.artifacthub.package.maintainers=[{\"name\":\"Andriy Kalashnykov\",\"email\":\"andriykalashnykov@gmail.com\"}]
             io.artifacthub.package.license=CC0
@@ -103,13 +103,13 @@ jobs:
             type=ref,event=branch
             type=ref,event=tag
             type=ref,event=pr
-            type=semver,pattern=v{{version}}
+            type=semver,pattern=v{{version}}-alpine
           labels: |
             org.opencontainers.image.vendor=Andriy Kalashnykov - andriykalashnykov@gmail.com
             org.opencontainers.image.title=Dlib Alpine Docker image
             org.opencontainers.image.description=Dlib Alpine Docker image
             org.opencontainers.image.licenses=CC0
-            org.opencontainers.image.version=${{ github.ref_name }}"
+            org.opencontainers.image.version=${{ github.ref_name }}"-alpine
             io.artifacthub.package.readme-url=https://raw.githubusercontent.com/AndriyKalashnykov/dlib-docker/main/README.md
             io.artifacthub.package.maintainers=[{\"name\":\"Andriy Kalashnykov\",\"email\":\"andriykalashnykov@gmail.com\"}]
             io.artifacthub.package.license=CC0
