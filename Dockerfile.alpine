@@ -25,7 +25,7 @@ RUN set -eux; \
         ( \
           cd dlib-${DLIB_VERSION}/build; \
           cmake -DDLIB_PNG_SUPPORT=ON -DDLIB_GIF_SUPPORT=ON -DDLIB_JPEG_SUPPORT=ON -DDLIB_NO_GUI_SUPPORT=ON ..; \
-          make -j4; \
+          make -j$(grep -c processor /proc/cpuinfo); \
           make install; \
         ); \
         apk del --no-network .build-deps; \

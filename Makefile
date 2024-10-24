@@ -27,17 +27,25 @@ bootstrap: ## bootstrap build dblib image
 	docker buildx create --use --platform=linux/arm64,linux/amd64 --name multi-platform-builder
 
 
-.PHONY: bdi
-bdi: ## build dblib image
-	docker build --platform linux/amd64 -f Dockerfile -t anriykalashnykov/dblib-docker:latest .
+.PHONY: bdid
+bdid: ## build debian dblib image
+	docker build --platform linux/amd64 -f Dockerfile.debian -t anriykalashnykov/dblib-docker-debian:latest .
 
-.PHONY: rdi
-rdi: ## run dlib image
-	docker run --rm -v $PWD:/app -w /app -it anriykalashnykov/dblib-docker:latest /bin/bash
+.PHONY: rdid
+rdid: ## run debian dlib image
+	docker run --rm -v $PWD:/app -w /app -it anriykalashnykov/dblib-docker-debian:latest /bin/bash
+
+.PHONY: bdia
+bdia: ## build alpine dblib image
+	docker build --platform linux/amd64 -f Dockerfile.alpine -t anriykalashnykov/dblib-docker-alpine:latest .
+
+.PHONY: rdia
+rdia: ## run alpine dlib image
+	docker run --rm -v $PWD:/app -w /app -it anriykalashnykov/dblib-docker-alpine:latest /bin/sh
 
 .PHONY: dt
 dt: ## delete tag
 	rm version.txt
-	git push --delete origin v0.0.1
-	git tag --delete v0.0.1
+	git push --delete origin v19.24
+	git tag --delete v19.24
 

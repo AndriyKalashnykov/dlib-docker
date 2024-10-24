@@ -55,8 +55,8 @@ jobs:
           echo "Tag name from GITHUB_REF_NAME: $GITHUB_REF_NAME"
           echo "Tag name from github.ref_name: ${{  github.ref_name }}"
 
-      - name: Docker meta
-        id: meta
+      - name: Docker meta Debian
+        id: meta_debian
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.OWNER_LC }}/dlib-docker
@@ -68,27 +68,65 @@ jobs:
             type=semver,pattern=v{{version}}
           labels: |
             org.opencontainers.image.vendor=Andriy Kalashnykov - andriykalashnykov@gmail.com
-            org.opencontainers.image.title=Dlib Docker image
-            org.opencontainers.image.description=Dlib Docker image
+            org.opencontainers.image.title=Dlib Debian Docker image
+            org.opencontainers.image.description=Dlib Debian Docker image
             org.opencontainers.image.licenses=CC0
             org.opencontainers.image.version=${{ github.ref_name }}"
             io.artifacthub.package.readme-url=https://raw.githubusercontent.com/AndriyKalashnykov/dlib-docker/main/README.md
             io.artifacthub.package.maintainers=[{\"name\":\"Andriy Kalashnykov\",\"email\":\"andriykalashnykov@gmail.com\"}]
             io.artifacthub.package.license=CC0
 
-      - name: Build and push
-        id: docker_build
+      - name: Build and push debian image
+        id: docker_build_debian
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./Dockerfile
+          file: ./Dockerfile.debian
           platforms: linux/amd64,linux/arm64
           push: ${{ github.ref_type == 'tag' }}
           provenance: false
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta_debian.outputs.tags }}
+          labels: ${{ steps.meta_debian.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Output container image digest
-        run: echo ${{ steps.docker_build.outputs.digest }}
+      - name: Output debian container image digest
+        run: echo ${{ steps.docker_build_debian.outputs.digest }}
+
+      - name: Docker meta Alpine
+        id: meta_alpine
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.OWNER_LC }}/dlib-docker
+          flavor: latest=true
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+            type=ref,event=pr
+            type=semver,pattern=v{{version}}
+          labels: |
+            org.opencontainers.image.vendor=Andriy Kalashnykov - andriykalashnykov@gmail.com
+            org.opencontainers.image.title=Dlib Alpine Docker image
+            org.opencontainers.image.description=Dlib Alpine Docker image
+            org.opencontainers.image.licenses=CC0
+            org.opencontainers.image.version=${{ github.ref_name }}"
+            io.artifacthub.package.readme-url=https://raw.githubusercontent.com/AndriyKalashnykov/dlib-docker/main/README.md
+            io.artifacthub.package.maintainers=[{\"name\":\"Andriy Kalashnykov\",\"email\":\"andriykalashnykov@gmail.com\"}]
+            io.artifacthub.package.license=CC0
+
+      - name: Build and push alpine image
+        id: docker_build_alpine
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile.debian
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.ref_type == 'tag' }}
+          provenance: false
+          tags: ${{ steps.meta_alpine.outputs.tags }}
+          labels: ${{ steps.meta_alpine.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Output alpine container image digest
+        run: echo ${{ steps.docker_build_alpine.outputs.digest }}
