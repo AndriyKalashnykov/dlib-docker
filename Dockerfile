@@ -24,17 +24,16 @@ RUN DEBIAN_FRONTEND=${DEBIAN_FRONTEND} apt-get install -y \
 # https://packages.debian.org/buster/libjpeg62-turbo-dev
 # RUN mkdir /libjpeg-turbo && cd /libjpeg-turbo && curl -sLO http://mirrors.edge.kernel.org/ubuntu/pool/main/libj/libjpeg-turbo/libjpeg-turbo8-dev_2.1.5-2ubuntu2_amd64.deb && apt-get install -y ./libjpeg-turbo8-dev_2.1.5-2ubuntu2_amd64.deb
 
-ENV GCC_VERSION=11.5.0
+ENV GCC_VERSION=12.4.0
+#ENV GCC_VERSION=14.2.0
 
 WORKDIR /opt
 
 RUN cd /opt && \
     wget http://ftp.gnu.org/gnu/gcc/gcc-${GCC_VERSION}/gcc-${GCC_VERSION}.tar.gz && \
-    tar xf gcc-${GCC_VERSION}.tar.gz && \
-    cd gcc-${GCC_VERSION} && \
+    tar xf gcc-${GCC_VERSION}.tar.gz && cd gcc-${GCC_VERSION} && \
     ./configure --disable-multilib --disable-libquadmath --disable-libquadmath-support --enable-languages=c,c++ && \
-    make -j$(grep -c processor /proc/cpuinfo) && \
-    make install
+    make -j$(grep -c processor /proc/cpuinfo) && make install
 
 ENV DLIB_VERSION=19.24
 
