@@ -32,7 +32,7 @@ RUN cd /opt && \
     wget http://ftp.gnu.org/gnu/gcc/gcc-${GCC_VERSION}/gcc-${GCC_VERSION}.tar.gz && \
     tar xf gcc-${GCC_VERSION}.tar.gz && \
     cd gcc-${GCC_VERSION} && \
-    ./configure --disable-libquadmath --disable-libquadmath-support --enable-languages=c,c++ && \
+    ./configure --disable-multilib --disable-libquadmath --disable-libquadmath-support --enable-languages=c,c++ && \
     make -j$(grep -c processor /proc/cpuinfo) && \
     make install
 
