@@ -28,6 +28,7 @@ bootstrap: ## bootstrap build dblib image
 
 .PHONY: bdid
 bdid: ## build debian dblib image
+	docker build --platform linux/arm64 -f Dockerfile -t anriykalashnykov/dblib-docker:arm64 .
 	docker build --platform linux/amd64 -f Dockerfile.debian -t anriykalashnykov/dblib-docker:latest .
 
 .PHONY: rdid
