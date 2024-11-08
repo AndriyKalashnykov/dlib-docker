@@ -49,4 +49,3 @@ dt: ## delete tag
 	rm -f version.txt
 	git push --delete origin v19.24.0
 	git tag --delete v19.24.0
-
