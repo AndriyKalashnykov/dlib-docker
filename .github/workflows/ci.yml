@@ -85,9 +85,9 @@ jobs:
           context: .
           file: ./Dockerfile.debian.amd64
           platforms: linux/amd64
-          build-args:
-            - DLIB_VERSION=19.24
-            - GCC_VERSION=12.4.0
+          build-args: |
+            DLIB_VERSION=19.24
+            GCC_VERSION=12.4.0
           push: ${{ github.ref_type == 'tag' }}
           provenance: false
           tags: ${{ steps.meta_debian_amd64.outputs.tags }}
@@ -128,9 +128,9 @@ jobs:
           context: .
           file: ./Dockerfile.debian.arm64
           platforms: linux/arm64
-          build-args:
-            - DLIB_VERSION=19.24
-            - GCC_VERSION=12.4.0
+          build-args: |
+            DLIB_VERSION=19.24
+            GCC_VERSION=12.4.0
           push: ${{ github.ref_type == 'tag' }}
           provenance: false
           tags: ${{ steps.meta_debian_arm64.outputs.tags }}
