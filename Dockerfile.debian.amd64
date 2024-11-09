@@ -1,27 +1,27 @@
 ARG OS_IMAGE="debian:bookworm"
-ARG DEBIAN_FRONTEND=noninteractive
 
-FROM ${OS_IMAGE} AS base
-FROM base AS cross-true
+FROM ${OS_IMAGE} AS builder
+
+ARG DEBIAN_FRONTEND=noninteractive
+ARG DLIB_VERSION=19.24
+ARG GCC_VERSION=12.4.0
+#ARG GCC_VERSION=14.2.0
+
+RUN DEBIAN_FRONTEND=${DEBIAN_FRONTEND} apt-get update
 
 RUN dpkg --add-architecture arm64
 RUN dpkg --add-architecture armel
 RUN dpkg --add-architecture armhf
 
-RUN --mount=type=cache,sharing=locked,id=moby-cross-true-aptlib,target=/var/lib/apt \
-    --mount=type=cache,sharing=locked,id=moby-cross-true-aptcache,target=/var/cache/apt \
-     DEBIAN_FRONTEND=${DEBIAN_FRONTEND} apt-get update && apt-get install -y --no-install-recommends \
+RUN DEBIAN_FRONTEND=${DEBIAN_FRONTEND} apt-get update && apt-get install -y --no-install-recommends \
     crossbuild-essential-arm64 \
     crossbuild-essential-armel \
     crossbuild-essential-armhf
 
-FROM cross-true AS runtime-dev-cross-true
 # These crossbuild packages rely on gcc-<arch>, but this doesn't want to install
 # on non-amd64 systems, so other architectures cannot crossbuild amd64.
 
-RUN --mount=type=cache,sharing=locked,id=moby-cross-true-aptlib,target=/var/lib/apt \
-    --mount=type=cache,sharing=locked,id=moby-cross-true-aptcache,target=/var/cache/apt \
-    DEBIAN_FRONTEND=${DEBIAN_FRONTEND} apt-get update && apt-get install -y --no-install-recommends \
+RUN DEBIAN_FRONTEND=${DEBIAN_FRONTEND} apt-get update && apt-get install -y --no-install-recommends \
     libapparmor-dev:arm64 \
     libapparmor-dev:armel \
     libapparmor-dev:armhf \
@@ -29,11 +29,6 @@ RUN --mount=type=cache,sharing=locked,id=moby-cross-true-aptlib,target=/var/lib/
     libseccomp-dev:armel \
     libseccomp-dev:armhf
 
-FROM runtime-dev-cross-true AS runtime-dev
-
-ENV DLIB_VERSION=19.24
-
-RUN DEBIAN_FRONTEND=${DEBIAN_FRONTEND} apt-get update
 RUN DEBIAN_FRONTEND=${DEBIAN_FRONTEND} apt-get install -y build-essential cmake curl
 
 RUN DEBIAN_FRONTEND=${DEBIAN_FRONTEND} apt-get install -y \
@@ -53,8 +48,8 @@ RUN DEBIAN_FRONTEND=${DEBIAN_FRONTEND} apt-get install -y \
 # RUN mkdir /libjpeg-turbo && cd /libjpeg-turbo && curl -sLO http://mirrors.edge.kernel.org/ubuntu/pool/main/libj/libjpeg-turbo/libjpeg-turbo8-dev_2.1.5-2ubuntu2_amd64.deb && apt-get install -y ./libjpeg-turbo8-dev_2.1.5-2ubuntu2_amd64.deb
 
 # https://github.com/imishinist/dlib/blob/master/19.21/buster/Dockerfile
-RUN mkdir /dlib && cd /dlib && curl -sLO http://dlib.net/files/dlib-${DLIB_VERSION}.tar.bz2 && tar xf dlib-${DLIB_VERSION}.tar.bz2
-RUN cd /dlib/dlib-${DLIB_VERSION} && mkdir build && cd build \
+RUN mkdir /dlib && cd /dlib && curl -sLO http://dlib.net/files/dlib-$DLIB_VERSION.tar.bz2 && tar xf dlib-$DLIB_VERSION.tar.bz2
+RUN cd /dlib/dlib-$DLIB_VERSION && mkdir build && cd build \
     && cmake .. && cmake -DDLIB_PNG_SUPPORT=ON -DDLIB_GIF_SUPPORT=ON -DDLIB_JPEG_SUPPORT=ON -DDLIB_NO_GUI_SUPPORT=ON .. \
     && cmake --build . --config Release \
     && make -j$(grep -c processor /proc/cpuinfo) \

@@ -85,6 +85,9 @@ jobs:
           context: .
           file: ./Dockerfile.debian.amd64
           platforms: linux/amd64
+          build-args:
+            - DLIB_VERSION=19.24
+            - GCC_VERSION=12.4.0
           push: ${{ github.ref_type == 'tag' }}
           provenance: false
           tags: ${{ steps.meta_debian_amd64.outputs.tags }}
@@ -95,42 +98,45 @@ jobs:
       - name: Output debian container image digest amd64
         run: echo ${{ steps.docker_build_debian_amd64.outputs.digest }}
 
-#      - name: Docker meta Debian arm64
-#        id: meta_debian_arm64
-#        uses: docker/metadata-action@v5
-#        with:
-#          images: ${{ env.REGISTRY }}/${{ env.OWNER_LC }}/dlib-docker
-#          flavor: |
-#            latest=false
-#            suffix=-arm64
-#          tags: |
-#            type=ref,event=branch
-#            type=ref,event=tag
-#            type=ref,event=pr
-#            type=semver,pattern=v{{version}}
-#          labels: |
-#            org.opencontainers.image.vendor=Andriy Kalashnykov - andriykalashnykov@gmail.com
-#            org.opencontainers.image.title=Dlib Debian Docker image
-#            org.opencontainers.image.description=Dlib Debian Docker image
-#            org.opencontainers.image.licenses=CC0
-#            org.opencontainers.image.version=${{ github.ref_name }}"
-#            io.artifacthub.package.readme-url=https://raw.githubusercontent.com/AndriyKalashnykov/dlib-docker/main/README.md
-#            io.artifacthub.package.maintainers=[{\"name\":\"Andriy Kalashnykov\",\"email\":\"andriykalashnykov@gmail.com\"}]
-#            io.artifacthub.package.license=CC0
-#
-#      - name: Build and push debian image arm64
-#        id: docker_build_debian_arm64
-#        uses: docker/build-push-action@v6
-#        with:
-#          context: .
-#          file: ./Dockerfile.debian.arm64
-#          platforms: linux/arm64
-#          push: ${{ github.ref_type == 'tag' }}
-#          provenance: false
-#          tags: ${{ steps.meta_debian_arm64.outputs.tags }}
-#          labels: ${{ steps.meta_debian_arm64.outputs.labels }}
-#          cache-from: type=gha
-#          cache-to: type=gha,mode=max
-#
-#      - name: Output debian container image digest arm64
-#        run: echo ${{ steps.docker_build_debian_arm64.outputs.digest }}
+      - name: Docker meta Debian arm64
+        id: meta_debian_arm64
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.OWNER_LC }}/dlib-docker
+          flavor: |
+            latest=false
+            suffix=-arm64
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+            type=ref,event=pr
+            type=semver,pattern=v{{version}}
+          labels: |
+            org.opencontainers.image.vendor=Andriy Kalashnykov - andriykalashnykov@gmail.com
+            org.opencontainers.image.title=Dlib Debian Docker image
+            org.opencontainers.image.description=Dlib Debian Docker image
+            org.opencontainers.image.licenses=CC0
+            org.opencontainers.image.version=${{ github.ref_name }}"
+            io.artifacthub.package.readme-url=https://raw.githubusercontent.com/AndriyKalashnykov/dlib-docker/main/README.md
+            io.artifacthub.package.maintainers=[{\"name\":\"Andriy Kalashnykov\",\"email\":\"andriykalashnykov@gmail.com\"}]
+            io.artifacthub.package.license=CC0
+
+      - name: Build and push debian image arm64
+        id: docker_build_debian_arm64
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile.debian.arm64
+          platforms: linux/arm64
+          build-args:
+            - DLIB_VERSION=19.24
+            - GCC_VERSION=12.4.0
+          push: ${{ github.ref_type == 'tag' }}
+          provenance: false
+          tags: ${{ steps.meta_debian_arm64.outputs.tags }}
+          labels: ${{ steps.meta_debian_arm64.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Output debian container image digest arm64
+        run: echo ${{ steps.docker_build_debian_arm64.outputs.digest }}
