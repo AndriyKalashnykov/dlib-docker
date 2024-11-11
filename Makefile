@@ -23,8 +23,8 @@ bootstrap: ## bootstrap build dblib image
 	docker buildx create --use --platform=linux/arm64,linux/amd64 --name multi-platform-builder
 
 bdid: ## build debian dblib image
-	docker build --platform linux/amd64 -f Dockerfile.debian.amd64 --build-arg DLIB_VERSION=19.24 -t anriykalashnykov/dblib-docker:amd64 .
-	docker build --platform linux/arm64 -f Dockerfile.debian.arm64 --build-arg DLIB_VERSION=19.24 -t anriykalashnykov/dblib-docker:arm64 .
+	docker buildx build --platform linux/amd64 -f Dockerfile.debian.amd64 --build-arg DLIB_VERSION=19.24 -t anriykalashnykov/dblib-docker:amd64 .
+	docker buildx build --platform linux/arm64 -f Dockerfile.debian.arm64 --build-arg DLIB_VERSION=19.24 -t anriykalashnykov/dblib-docker:arm64 .
 
 rdid: ## run debian dlib image
 	docker run --rm -v $PWD:/app -w /app -it anriykalashnykov/dblib-docker:amd64 /bin/bash
