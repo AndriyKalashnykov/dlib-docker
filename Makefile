@@ -20,9 +20,10 @@ release: ## create and push a new tag
 	@echo "Done."
 
 bootstrap: ## bootstrap build dblib image
-	docker buildx create --use --platform=linux/arm64,linux/amd64 --name multi-platform-builder
+	docker buildx create --use --platform=linux/arm64,linux/amd64,linux/arm/v7 --name multi-platform-builder
 
 bdid: ## build debian dblib image
+	docker buildx build --platform linux/arm/v7 -f Dockerfile.debian.arm64 --build-arg DLIB_VERSION=19.24 -t anriykalashnykov/dblib-docker:armv7 .
 	docker buildx build --platform linux/amd64 -f Dockerfile.debian.amd64 --build-arg DLIB_VERSION=19.24 -t anriykalashnykov/dblib-docker:amd64 .
 	docker buildx build --platform linux/arm64 -f Dockerfile.debian.arm64 --build-arg DLIB_VERSION=19.24 -t anriykalashnykov/dblib-docker:arm64 .
 
