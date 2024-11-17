@@ -61,7 +61,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.OWNER_LC }}/dlib-docker
           flavor: |
-            latest=true
+            latest=false
 #            suffix=-amd64
           tags: |
             type=ref,event=branch
@@ -104,7 +104,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.OWNER_LC }}/dlib-docker
           flavor: |
-            latest=true
+            latest=fase
 #            suffix=-arm7
           tags: |
             type=ref,event=branch
