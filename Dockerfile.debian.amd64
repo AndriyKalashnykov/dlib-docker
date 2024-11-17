@@ -9,25 +9,25 @@ ARG GCC_VERSION=12.4.0
 
 RUN DEBIAN_FRONTEND=${DEBIAN_FRONTEND} apt-get update
 
-RUN dpkg --add-architecture arm64
-RUN dpkg --add-architecture armel
-RUN dpkg --add-architecture armhf
+#RUN dpkg --add-architecture arm64
+#RUN dpkg --add-architecture armel
+#RUN dpkg --add-architecture armhf
 
-RUN DEBIAN_FRONTEND=${DEBIAN_FRONTEND} apt-get update && apt-get install -y --no-install-recommends \
-    crossbuild-essential-arm64 \
-    crossbuild-essential-armel \
-    crossbuild-essential-armhf
+#RUN DEBIAN_FRONTEND=${DEBIAN_FRONTEND} apt-get update && apt-get install -y --no-install-recommends \
+#    crossbuild-essential-arm64 \
+#    crossbuild-essential-armel \
+#    crossbuild-essential-armhf
 
 # These crossbuild packages rely on gcc-<arch>, but this doesn't want to install
 # on non-amd64 systems, so other architectures cannot crossbuild amd64.
 
-RUN DEBIAN_FRONTEND=${DEBIAN_FRONTEND} apt-get update && apt-get install -y --no-install-recommends \
-    libapparmor-dev:arm64 \
-    libapparmor-dev:armel \
-    libapparmor-dev:armhf \
-    libseccomp-dev:arm64 \
-    libseccomp-dev:armel \
-    libseccomp-dev:armhf
+#RUN DEBIAN_FRONTEND=${DEBIAN_FRONTEND} apt-get update && apt-get install -y --no-install-recommends \
+#    libapparmor-dev:arm64 \
+#    libapparmor-dev:armel \
+#    libapparmor-dev:armhf \
+#    libseccomp-dev:arm64 \
+#    libseccomp-dev:armel \
+#    libseccomp-dev:armhf
 
 RUN DEBIAN_FRONTEND=${DEBIAN_FRONTEND} apt-get install -y build-essential cmake curl
 
