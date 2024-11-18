@@ -1,6 +1,6 @@
 ARG OS_IMAGE="debian:bookworm"
 
-FROM --platform=$BUILDPLATFORM ${OS_IMAGE} AS builder
+FROM ${OS_IMAGE} AS builder
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG DLIB_VERSION=19.24

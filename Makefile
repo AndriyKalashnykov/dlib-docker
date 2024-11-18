@@ -24,13 +24,14 @@ bootstrap: ## bootstrap build dblib image
 
 bdid: bootstrap ## build debian dblib image
 	docker buildx use multi-platform-builder
-	docker buildx build --platform linux/arm/v7 -f Dockerfile.debian.arm64 --build-arg DLIB_VERSION=19.24 -t anriykalashnykov/dblib-docker:armv7 .
-	docker buildx build --platform linux/amd64 -f Dockerfile.debian.amd64 --build-arg DLIB_VERSION=19.24 -t anriykalashnykov/dblib-docker:amd64 .
-	docker buildx build --platform linux/arm64 -f Dockerfile.debian.arm64 --build-arg DLIB_VERSION=19.24 -t anriykalashnykov/dblib-docker:arm64 .
+	docker buildx build --load --platform linux/arm/v7 -f Dockerfile.debian.arm64 --build-arg DLIB_VERSION=19.24 -t anriykalashnykov/dblib-docker:armv7 .
+	docker buildx build --load --platform linux/amd64 -f Dockerfile.debian.amd64 --build-arg DLIB_VERSION=19.24 -t anriykalashnykov/dblib-docker:amd64 .
+	docker buildx build --load --platform linux/arm64 -f Dockerfile.debian.arm64 --build-arg DLIB_VERSION=19.24 -t anriykalashnykov/dblib-docker:arm64 .
 
-rdid: ## run debian dlib image
-	docker run --rm -v $PWD:/app -w /app -it anriykalashnykov/dblib-docker:amd64 /bin/bash
-	docker run --rm -v $PWD:/app -w /app -it anriykalashnykov/dblib-docker:arm64 /bin/bash
+rdid: ## run debian dlib image -v $PWD:/app -w /app
+	docker run --rm -it anriykalashnykov/dblib-docker:armv7 /bin/bash
+	docker run --rm -it anriykalashnykov/dblib-docker:amd64 /bin/bash
+	docker run --rm -it anriykalashnykov/dblib-docker:arm64 /bin/bash
 
 bdia: ## build alpine dblib image
 	docker build --platform linux/amd64 -f Dockerfile.alpine -t anriykalashnykov/dblib-docker:latest-alpine .
