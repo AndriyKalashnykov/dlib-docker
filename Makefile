@@ -22,11 +22,11 @@ release: ## create and push a new tag
 bootstrap: ## bootstrap build dblib image
 	docker buildx create --use --platform=linux/arm64,linux/amd64,linux/arm/v7 --name multi-platform-builder --driver docker-container --bootstrap
 
-bdid: bootstrap ## build debian dblib image
+bdid: ## build debian dblib image
 	docker buildx use multi-platform-builder
-	docker buildx build --load --platform linux/arm/v7 -f Dockerfile.debian.arm64 --build-arg DLIB_VERSION=19.24 -t anriykalashnykov/dblib-docker:armv7 .
-	docker buildx build --load --platform linux/amd64 -f Dockerfile.debian.amd64 --build-arg DLIB_VERSION=19.24 -t anriykalashnykov/dblib-docker:amd64 .
-	docker buildx build --load --platform linux/arm64 -f Dockerfile.debian.arm64 --build-arg DLIB_VERSION=19.24 -t anriykalashnykov/dblib-docker:arm64 .
+	docker buildx build --load --platform linux/arm/v7 -f Dockerfile.debian --build-arg DLIB_VERSION=19.24 -t anriykalashnykov/dblib-docker:armv7 .
+	docker buildx build --load --platform linux/amd64 -f Dockerfile.debian --build-arg DLIB_VERSION=19.24 -t anriykalashnykov/dblib-docker:amd64 .
+	docker buildx build --load --platform linux/arm64 -f Dockerfile.debian --build-arg DLIB_VERSION=19.24 -t anriykalashnykov/dblib-docker:arm64 .
 
 rdid: ## run debian dlib image -v $PWD:/app -w /app
 	docker run --rm -it anriykalashnykov/dblib-docker:armv7 /bin/bash
