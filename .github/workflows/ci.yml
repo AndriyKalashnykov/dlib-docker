@@ -84,8 +84,9 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
-          platforms: linux/amd64, linux/arm64, linux/arm/v7
+          platforms: linux/arm/v7, linux/arm64, linux/amd64
           build-args: |
+            BUILDER_IMAGE=ubuntu:24.10
             DLIB_VERSION=19.24
             GCC_VERSION=12.4.0
           push: ${{ github.ref_type == 'tag' }}

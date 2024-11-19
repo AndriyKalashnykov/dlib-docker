@@ -25,21 +25,16 @@ bootstrap: ## bootstrap build dblib image
 bdid: ## build debian dblib image
 	docker buildx use multi-platform-builder
 	docker buildx build --load --platform linux/arm/v7 -f Dockerfile --build-arg DLIB_VERSION=19.24 -t anriykalashnykov/dblib-docker:armv7 .
-	docker buildx build --load --platform linux/amd64 -f Dockerfile --build-arg DLIB_VERSION=19.24 -t anriykalashnykov/dblib-docker:amd64 .
 	docker buildx build --load --platform linux/arm64 -f Dockerfile --build-arg DLIB_VERSION=19.24 -t anriykalashnykov/dblib-docker:arm64 .
+	docker buildx build --load --platform linux/amd64 -f Dockerfile --build-arg DLIB_VERSION=19.24 -t anriykalashnykov/dblib-docker:amd64 .
+
 
 rdid: ## run debian dlib image -v $PWD:/app -w /app
 	docker run --rm -it anriykalashnykov/dblib-docker:armv7 /bin/bash
-	docker run --rm -it anriykalashnykov/dblib-docker:amd64 /bin/bash
 	docker run --rm -it anriykalashnykov/dblib-docker:arm64 /bin/bash
-
-bdia: ## build alpine dblib image
-	docker build --platform linux/amd64 -f Dockerfile.alpine -t anriykalashnykov/dblib-docker:latest-alpine .
-
-rdia: ## run alpine dlib image
-	docker run --rm -v $PWD:/app -w /app -it anriykalashnykov/dblib-docker:latest-alpine /bin/sh
+	docker run --rm -it anriykalashnykov/dblib-docker:amd64 /bin/bash
 
 dt: ## delete tag
 	rm -f version.txt
-	git push --delete origin v19.24.0
-	git tag --delete v19.24.0
+	git push --delete origin v19.24.4
+	git tag --delete v19.24.4

@@ -1,6 +1,6 @@
-ARG OS_IMAGE="debian:bookworm"
+ARG BUILDER_IMAGE="ubuntu:24.10"
 
-FROM ${OS_IMAGE} AS builder
+FROM ${BUILDER_IMAGE} AS builder
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG DLIB_VERSION=19.24
@@ -30,9 +30,9 @@ RUN <<EOT
     fi
 EOT
 
-RUN DEBIAN_FRONTEND=${DEBIAN_FRONTEND} apt-get install -y build-essential cmake curl
+RUN DEBIAN_FRONTEND=${DEBIAN_FRONTEND} apt-get install -y --no-install-recommends build-essential cmake curl
 
-RUN DEBIAN_FRONTEND=${DEBIAN_FRONTEND} apt-get install -y \
+RUN DEBIAN_FRONTEND=${DEBIAN_FRONTEND} apt-get install -y --no-install-recommends \
     libopenblas-dev \
     libblas-dev \
     libatlas-base-dev \
@@ -40,13 +40,11 @@ RUN DEBIAN_FRONTEND=${DEBIAN_FRONTEND} apt-get install -y \
     libjpeg-dev \
     libpng-dev \
     liblapack-dev \
-    gfortran \
+    gfortran libgfortran5 \
     libx11-dev libgtk-3-dev \
-    libjpeg62-turbo-dev
-
-# http://mirrors.edge.kernel.org/ubuntu/pool/main/libj/libjpeg-turbo/
-# https://packages.debian.org/buster/libjpeg62-turbo-dev
-# RUN mkdir /libjpeg-turbo && cd /libjpeg-turbo && curl -sLO http://mirrors.edge.kernel.org/ubuntu/pool/main/libj/libjpeg-turbo/libjpeg-turbo8-dev_2.1.5-2ubuntu2_amd64.deb && apt-get install -y ./libjpeg-turbo8-dev_2.1.5-2ubuntu2_amd64.deb
+    libjpeg-turbo8-dev \
+    libdlib-dev
+# https://launchpad.net/ubuntu/oracular/+package/libdlib-dev
 
 # build GCC
 #RUN DEBIAN_FRONTEND=${DEBIAN_FRONTEND} apt-get update && apt-get install -y --no-install-recommends \
@@ -62,13 +60,13 @@ RUN DEBIAN_FRONTEND=${DEBIAN_FRONTEND} apt-get install -y \
 
 # build DLib
 # https://github.com/imishinist/dlib/blob/master/19.21/buster/Dockerfile
-RUN mkdir /dlib && cd /dlib && curl -sLO http://dlib.net/files/dlib-$DLIB_VERSION.tar.bz2 && tar xf dlib-$DLIB_VERSION.tar.bz2
-RUN cd /dlib/dlib-$DLIB_VERSION && mkdir build && cd build \
-    && cmake .. && cmake -DDLIB_PNG_SUPPORT=ON -DDLIB_GIF_SUPPORT=ON -DDLIB_JPEG_SUPPORT=ON -DDLIB_NO_GUI_SUPPORT=ON .. \
-    && cmake --build . --config Release \
-    && make -j$(grep -c processor /proc/cpuinfo) \
-    && make install \
-    && rm -rf /dlib
+#RUN mkdir /dlib && cd /dlib && curl -sLO http://dlib.net/files/dlib-$DLIB_VERSION.tar.bz2 && tar xf dlib-$DLIB_VERSION.tar.bz2
+#RUN cd /dlib/dlib-$DLIB_VERSION && mkdir build && cd build \
+#    && cmake .. && cmake -DDLIB_PNG_SUPPORT=ON -DDLIB_GIF_SUPPORT=ON -DDLIB_JPEG_SUPPORT=ON -DDLIB_NO_GUI_SUPPORT=ON .. \
+#    && cmake --build . --config Release \
+#    && make -j$(grep -c processor /proc/cpuinfo) \
+#    && make install \
+#    && rm -rf /dlib
 
 #    && apt-get autoremove -y; apt-get clean; rm -rf /var/cache;
 
