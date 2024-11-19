@@ -30,7 +30,7 @@ RUN <<EOT
     fi
 EOT
 
-RUN DEBIAN_FRONTEND=${DEBIAN_FRONTEND} apt-get install -y --no-install-recommends build-essential cmake curl
+RUN DEBIAN_FRONTEND=${DEBIAN_FRONTEND} apt-get install -y --no-install-recommends build-essential cmake curl wget net-tools
 
 RUN DEBIAN_FRONTEND=${DEBIAN_FRONTEND} apt-get install -y --no-install-recommends \
     libopenblas-dev \
