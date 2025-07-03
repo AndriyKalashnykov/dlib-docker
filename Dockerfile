@@ -1,4 +1,4 @@
-ARG BUILDER_IMAGE="ubuntu:oracular-20250428"
+ARG BUILDER_IMAGE="ubuntu:oracular-20250619"
 
 FROM ${BUILDER_IMAGE} AS builder
 
