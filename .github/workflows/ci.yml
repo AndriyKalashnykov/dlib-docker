@@ -86,7 +86,7 @@ jobs:
           file: ./Dockerfile
           platforms: linux/arm/v7, linux/arm64, linux/amd64
           build-args: |
-            BUILDER_IMAGE=ubuntu:24.10
+            BUILDER_IMAGE=ubuntu:noble-20251001
             DLIB_VERSION=19.24
             GCC_VERSION=12.4.0
           push: ${{ github.ref_type == 'tag' }}
