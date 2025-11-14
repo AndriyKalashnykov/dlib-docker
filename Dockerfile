@@ -1,4 +1,4 @@
-ARG BUILDER_IMAGE="ubuntu:noble-20251001"
+ARG BUILDER_IMAGE="ubuntu:noble-20251013"
 
 FROM ${BUILDER_IMAGE} AS builder
 
