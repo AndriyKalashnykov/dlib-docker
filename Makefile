@@ -37,8 +37,8 @@ rdid: ## run debian dlib image -v $PWD:/app -w /app
 
 dt: ## delete tag
 	rm -f version.txt
-	git push --delete origin v20.0
-	git tag --delete v20.0
+	git push --delete origin v20.0.0
+	git tag --delete v20.0.0
 
 bootstrap-renovate: ## install nvm and npm for renovate
 	@if [ ! -d "$$HOME/.nvm" ]; then \
