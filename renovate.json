@@ -1,6 +1,64 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:recommended"
-  ]
+    "config:recommended",
+    ":automergeDigest",
+    ":automergeMinor",
+    ":automergePatch",
+    ":automergeRequireAllStatusChecks",
+    ":enableVulnerabilityAlertsWithLabel(security)"
+  ],
+  "platformAutomerge": true,
+  "dependencyDashboard": true,
+  "dependencyDashboardTitle": "Renovate Dashboard 🤖",
+  "assigneesFromCodeOwners": true,
+  "reviewersFromCodeOwners": true,
+  "packageRules": [
+    {
+      "description": "Automerge all dependencies if they pass checks",
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "automerge": true
+    },
+    {
+      "description": "Automerge major updates if all checks pass",
+      "matchUpdateTypes": ["major"],
+      "automerge": true
+    },
+    {
+      "description": "Group Docker dependencies",
+      "matchDatasources": ["docker"],
+      "groupName": "Docker dependencies",
+      "schedule": ["after 10pm every weekday", "before 5am every weekday", "every weekend"]
+    },
+    {
+      "description": "Automerge GitHub Actions",
+      "matchManagers": ["github-actions"],
+      "automerge": true,
+      "automergeType": "pr"
+    },
+    {
+      "description": "High priority security updates",
+      "matchUpdateTypes": ["patch"],
+      "matchCurrentVersion": "!/^0/",
+      "vulnerabilitySeverity": ["high", "critical"],
+      "labels": ["security", "priority"],
+      "automerge": true,
+      "prPriority": 10
+    }
+  ],
+  "prConcurrentLimit": 10,
+  "prHourlyLimit": 0,
+  "rebaseWhen": "behind-base-branch",
+  "semanticCommits": "enabled",
+  "timezone": "UTC",
+  "labels": ["dependencies", "renovate"],
+  "lockFileMaintenance": {
+    "enabled": true,
+    "automerge": true,
+    "schedule": ["before 5am on monday"]
+  },
+  "vulnerabilityAlerts": {
+    "labels": ["security"],
+    "automerge": true
+  }
 }

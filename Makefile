@@ -24,9 +24,9 @@ bootstrap: ## bootstrap build dblib image
 
 bdid: ## build debian dblib image
 	docker buildx use multi-platform-builder
-	docker buildx build --load --platform linux/amd64 -f Dockerfile --build-arg DLIB_VERSION=19.24 -t anriykalashnykov/dblib-docker:amd64 .
-	docker buildx build --load --platform linux/arm/v7 -f Dockerfile --build-arg DLIB_VERSION=19.24 -t anriykalashnykov/dblib-docker:armv7 .
-	docker buildx build --load --platform linux/arm64 -f Dockerfile --build-arg DLIB_VERSION=19.24 -t anriykalashnykov/dblib-docker:arm64 .
+	docker buildx build --load --platform linux/amd64 -f Dockerfile --build-arg DLIB_VERSION=20.0 -t anriykalashnykov/dblib-docker:amd64 .
+	docker buildx build --load --platform linux/arm/v7 -f Dockerfile --build-arg DLIB_VERSION=20.0 -t anriykalashnykov/dblib-docker:armv7 .
+	docker buildx build --load --platform linux/arm64 -f Dockerfile --build-arg DLIB_VERSION=20.0 -t anriykalashnykov/dblib-docker:arm64 .
 
 
 
