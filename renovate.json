@@ -40,7 +40,6 @@
       "description": "High priority security updates",
       "matchUpdateTypes": ["patch"],
       "matchCurrentVersion": "!/^0/",
-      "vulnerabilitySeverity": ["high", "critical"],
       "labels": ["security", "priority"],
       "automerge": true,
       "prPriority": 10

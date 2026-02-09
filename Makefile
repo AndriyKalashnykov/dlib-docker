@@ -39,3 +39,20 @@ dt: ## delete tag
 	rm -f version.txt
 	git push --delete origin v20.0
 	git tag --delete v20.0
+
+bootstrap-renovate: ## install nvm and npm for renovate
+	@if [ ! -d "$$HOME/.nvm" ]; then \
+		echo "Installing nvm..."; \
+		curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh | bash; \
+		export NVM_DIR="$$HOME/.nvm"; \
+		[ -s "$$NVM_DIR/nvm.sh" ] && . "$$NVM_DIR/nvm.sh"; \
+		nvm install --lts; \
+		nvm use --lts; \
+	else \
+		echo "nvm already installed"; \
+		export NVM_DIR="$$HOME/.nvm"; \
+		[ -s "$$NVM_DIR/nvm.sh" ] && . "$$NVM_DIR/nvm.sh"; \
+	fi
+
+validate-renovate: bootstrap-renovate
+	npx -p renovate -c 'renovate-config-validator'
