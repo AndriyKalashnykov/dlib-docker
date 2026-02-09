@@ -37,5 +37,5 @@ rdid: ## run debian dlib image -v $PWD:/app -w /app
 
 dt: ## delete tag
 	rm -f version.txt
-	git push --delete origin v19.24.4
-	git tag --delete v19.24.4
+	git push --delete origin v20.0
+	git tag --delete v20.0
