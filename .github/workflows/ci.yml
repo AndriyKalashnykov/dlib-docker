@@ -57,7 +57,7 @@ jobs:
 
       - name: Docker meta Debian
         id: meta_debian_amd64
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ env.REGISTRY }}/${{ env.OWNER_LC }}/dlib-docker
           flavor: |
