@@ -81,7 +81,7 @@ jobs:
 
       - name: Build and push debian image
         id: docker_build_debian_amd64
-        uses: docker/build-push-action@14487ce63c7a62a3fd1178696e674c35d8f2ab5f # v6
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: .
           file: ./Dockerfile
