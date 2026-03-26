@@ -9,8 +9,11 @@ on:
       branches: [ "main" ]
 
 permissions:
-  contents: write
-  packages: write
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
 
@@ -20,23 +23,23 @@ jobs:
       contents: read
       packages: write
     env:
-      REGISTRY: ghcr.io  
+      REGISTRY: ghcr.io
 
     steps:
 
       # debug
-      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event from ${{ github.actor }}."
-      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
-      - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+      - run: echo "The job was automatically triggered by a ${{ github.event_name }} event from ${{ github.actor }}."
+      - run: echo "This job is now running on a ${{ runner.os }} server hosted by GitHub!"
+      - run: echo "The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
 
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 0
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3
       - name: Convert owner to lower case
         run: |
           echo "OWNER_LC=${OWNER,,}" >>${GITHUB_ENV}
@@ -44,7 +47,7 @@ jobs:
           OWNER: '${{ github.repository_owner }}'
 
       - name: Login to image repository
-        uses: docker/login-action@v3
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -57,7 +60,7 @@ jobs:
 
       - name: Docker meta Debian
         id: meta_debian_amd64
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804 # v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.OWNER_LC }}/dlib-docker
           flavor: |
@@ -80,7 +83,7 @@ jobs:
 
       - name: Build and push debian image
         id: docker_build_debian_amd64
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@14487ce63c7a62a3fd1178696e674c35d8f2ab5f # v6
         with:
           context: .
           file: ./Dockerfile
@@ -98,5 +101,3 @@ jobs:
 
       - name: Output debian container image digest
         run: echo ${{ steps.docker_build_debian_amd64.outputs.digest }}
-
-
