@@ -6,10 +6,6 @@ on:
     tags: ['v*']
   pull_request:
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 permissions:
   contents: read
 
@@ -78,7 +74,7 @@ jobs:
             org.opencontainers.image.title=Dlib Debian Docker image
             org.opencontainers.image.description=Dlib Debian Docker image
             org.opencontainers.image.licenses=CC0
-            org.opencontainers.image.version=${{ github.ref_name }}"
+            org.opencontainers.image.version=${{ github.ref_name }}
             io.artifacthub.package.readme-url=https://raw.githubusercontent.com/AndriyKalashnykov/dlib-docker/main/README.md
             io.artifacthub.package.maintainers=[{\"name\":\"Andriy Kalashnykov\",\"email\":\"andriykalashnykov@gmail.com\"}]
             io.artifacthub.package.license=CC0
