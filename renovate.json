@@ -1,63 +1,47 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:recommended",
-    ":automergeDigest",
-    ":automergeMinor",
-    ":automergePatch",
-    ":automergeRequireAllStatusChecks",
-    ":enableVulnerabilityAlertsWithLabel(security)"
+    "config:best-practices",
+    ":semanticCommitType(chore)"
   ],
+  "commitMessagePrefix": "chore(all): ",
+  "commitMessageAction": "update",
+  "commitBody": "Signed-off-by: Renovate Bot <bot@renovateapp.com>",
+  "labels": ["dependencies"],
+  "prConcurrentLimit": 50,
+  "prHourlyLimit": 0,
   "platformAutomerge": true,
-  "dependencyDashboard": true,
-  "dependencyDashboardTitle": "Renovate Dashboard 🤖",
+  "automerge": true,
+  "automergeType": "pr",
+  "automergeStrategy": "squash",
+  "ignoreTests": false,
   "assigneesFromCodeOwners": true,
   "reviewersFromCodeOwners": true,
-  "packageRules": [
-    {
-      "description": "Automerge all dependencies if they pass checks",
-      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
-      "automerge": true
-    },
-    {
-      "description": "Automerge major updates if all checks pass",
-      "matchUpdateTypes": ["major"],
-      "automerge": true
-    },
-    {
-      "description": "Group Docker dependencies",
-      "matchDatasources": ["docker"],
-      "groupName": "Docker dependencies",
-      "schedule": ["after 10pm every weekday", "before 5am every weekday", "every weekend"]
-    },
-    {
-      "description": "Automerge GitHub Actions",
-      "matchManagers": ["github-actions"],
-      "automerge": true,
-      "automergeType": "pr"
-    },
-    {
-      "description": "High priority security updates",
-      "matchUpdateTypes": ["patch"],
-      "matchCurrentVersion": "!/^0/",
-      "labels": ["security", "priority"],
-      "automerge": true,
-      "prPriority": 10
-    }
-  ],
-  "prConcurrentLimit": 10,
-  "prHourlyLimit": 0,
-  "rebaseWhen": "behind-base-branch",
-  "semanticCommits": "enabled",
-  "timezone": "UTC",
-  "labels": ["dependencies", "renovate"],
+  "vulnerabilityAlerts": {
+    "labels": ["security"],
+    "automerge": true,
+    "minimumReleaseAge": "0 days"
+  },
   "lockFileMaintenance": {
     "enabled": true,
     "automerge": true,
     "schedule": ["before 5am on monday"]
   },
-  "vulnerabilityAlerts": {
-    "labels": ["security"],
-    "automerge": true
-  }
+  "packageRules": [
+    {
+      "description": "Wait 3 days before automerging major updates",
+      "matchUpdateTypes": ["major"],
+      "minimumReleaseAge": "3 days"
+    },
+    {
+      "description": "Group GitHub Actions into one PR",
+      "matchManagers": ["github-actions"],
+      "groupName": "GitHub Actions"
+    },
+    {
+      "description": "Group Docker base images",
+      "matchDatasources": ["docker"],
+      "groupName": "Docker dependencies"
+    }
+  ]
 }

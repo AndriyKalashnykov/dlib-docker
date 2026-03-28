@@ -1,0 +1,6 @@
+ignored:
+  - DL3006  # Always tag image explicitly — ARG-based FROM, tag set via build-arg
+  - DL3008  # Pin versions in apt-get install — system packages, pinning impractical
+  - DL3009  # Delete apt lists — build image, not production runtime
+  - DL3059  # Multiple consecutive RUN instructions — intentional for layer caching
+  - SC3014  # == in place of = — bash heredoc, not POSIX sh

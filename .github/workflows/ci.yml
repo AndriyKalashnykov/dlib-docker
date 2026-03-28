@@ -15,7 +15,18 @@ concurrency:
 
 jobs:
 
-  docker-image:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Lint
+        run: make lint
+
+  docker:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: ci
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -24,20 +35,17 @@ jobs:
       REGISTRY: ghcr.io
 
     steps:
-
-      # debug
-      - run: echo "The job was automatically triggered by a ${{ github.event_name }} event from ${{ github.actor }}."
-      - run: echo "This job is now running on a ${{ runner.os }} server hosted by GitHub!"
-      - run: echo "The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
-
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 0
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a # v4
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4
+
       - name: Convert owner to lower case
         run: |
           echo "OWNER_LC=${OWNER,,}" >>${GITHUB_ENV}
@@ -51,23 +59,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GH_ACCESS_TOKEN }}
 
-      - name: GitHub Tag Name example
-        run: |
-          echo "Tag name from GITHUB_REF_NAME: $GITHUB_REF_NAME"
-          echo "Tag name from github.ref_name: ${{  github.ref_name }}"
-
-      - name: Docker meta Debian
-        id: meta_debian_amd64
+      - name: Docker meta
+        id: meta
         uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf # v6
         with:
           images: ${{ env.REGISTRY }}/${{ env.OWNER_LC }}/dlib-docker
           flavor: |
             latest=false
-#            suffix=-amd64
           tags: |
-            type=ref,event=branch
-            type=ref,event=tag
-            type=ref,event=pr
             type=semver,pattern=v{{version}}
           labels: |
             org.opencontainers.image.vendor=Andriy Kalashnykov - andriykalashnykov@gmail.com
@@ -76,11 +75,10 @@ jobs:
             org.opencontainers.image.licenses=CC0
             org.opencontainers.image.version=${{ github.ref_name }}
             io.artifacthub.package.readme-url=https://raw.githubusercontent.com/AndriyKalashnykov/dlib-docker/main/README.md
-            io.artifacthub.package.maintainers=[{\"name\":\"Andriy Kalashnykov\",\"email\":\"andriykalashnykov@gmail.com\"}]
+            io.artifacthub.package.maintainers=[{"name":"Andriy Kalashnykov","email":"andriykalashnykov@gmail.com"}]
             io.artifacthub.package.license=CC0
 
-      - name: Build and push debian image
-        id: docker_build_debian_amd64
+      - name: Build and push image
         uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7
         with:
           context: .
@@ -89,13 +87,9 @@ jobs:
           build-args: |
             BUILDER_IMAGE=ubuntu:noble-20260113
             DLIB_VERSION=20.0
-            GCC_VERSION=12.4.0
-          push: ${{ github.ref_type == 'tag' }}
+          push: true
           provenance: false
-          tags: ${{ steps.meta_debian_amd64.outputs.tags }}
-          labels: ${{ steps.meta_debian_amd64.outputs.labels }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      - name: Output debian container image digest
-        run: echo ${{ steps.docker_build_debian_amd64.outputs.digest }}
