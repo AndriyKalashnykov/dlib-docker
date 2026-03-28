@@ -1,5 +1,6 @@
 [![CI](https://github.com/AndriyKalashnykov/dlib-docker/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/AndriyKalashnykov/dlib-docker/actions/workflows/ci.yml)
 [![Hits](https://hits.sh/github.com/AndriyKalashnykov/dlib-docker.svg?view=today-total&style=plastic)](https://hits.sh/github.com/AndriyKalashnykov/dlib-docker/)
+[![License: CC0](https://img.shields.io/badge/License-CC0-brightgreen.svg)](https://creativecommons.org/publicdomain/zero/1.0/)
 [![Renovate enabled](https://img.shields.io/badge/renovate-enabled-brightgreen.svg)](https://app.renovatebot.com/dashboard#github/AndriyKalashnykov/dlib-docker)
 
 # dlib-docker
@@ -65,8 +66,11 @@ Run `make help` to see all available targets.
 
 | Target | Description |
 |--------|-------------|
+| `make help` | List available make targets |
 | `make deps` | Verify required toolchain dependencies |
 | `make deps-hadolint` | Install hadolint for Dockerfile linting |
+| `make deps-act` | Install act for local CI execution |
+| `make deps-renovate` | Install nvm and npm for Renovate |
 | `make release` | Create and push a new semver tag |
 | `make tag-delete` | Delete a specific tag locally and from remote |
 | `make renovate-bootstrap` | Install nvm and npm for Renovate |
