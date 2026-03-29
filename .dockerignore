@@ -1,0 +1,9 @@
+.git
+.github
+.hadolint.yaml
+CLAUDE.md
+LICENSE
+Makefile
+README.md
+renovate.json
+version.txt

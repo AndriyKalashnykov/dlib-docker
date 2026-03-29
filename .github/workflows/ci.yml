@@ -1,4 +1,4 @@
-name: ci
+name: CI
 
 on:
   push:
@@ -85,7 +85,7 @@ jobs:
           file: ./Dockerfile
           platforms: linux/arm/v7, linux/arm64, linux/amd64
           build-args: |
-            BUILDER_IMAGE=ubuntu:noble-20260113
+            BUILDER_IMAGE=ubuntu:noble-20260217
             DLIB_VERSION=20.0
           push: true
           provenance: false
