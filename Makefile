@@ -4,7 +4,7 @@
 DOCKER_VERSION          := 27.5.1
 DLIB_VERSION            := 20.0
 BUILDER_IMAGE           := ubuntu:noble-20260217
-ACT_VERSION             := 0.2.86
+ACT_VERSION             := 0.2.87
 HADOLINT_VERSION        := 2.12.0
 NVM_VERSION             := 0.40.4
 
