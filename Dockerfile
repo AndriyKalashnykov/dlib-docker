@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1
+
 ARG BUILDER_IMAGE="ubuntu:noble-20260217@sha256:186072bba1b2f436cbb91ef2567abca677337cfc786c86e107d25b7072feef0c"
 
 FROM ${BUILDER_IMAGE} AS builder

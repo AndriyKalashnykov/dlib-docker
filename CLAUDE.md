@@ -21,11 +21,13 @@ make buildx-bootstrap  # create multi-platform buildx builder (required once)
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
+| `DOCKER_VERSION` | `27.5.1` | Minimum Docker Engine version (informational) |
 | `DLIB_VERSION` | `20.0` | DLib version |
 | `BUILDER_IMAGE` | `ubuntu:noble-20260217` | Base Docker image |
+| `ACT_VERSION` | `0.2.87` | Local CI runner version |
+| `HADOLINT_VERSION` | `2.14.0` | Dockerfile linter version |
+| `NVM_VERSION` | `0.40.4` | Node Version Manager version |
 | `IMAGE_NAME` | `anriykalashnykov/dblib-docker` | Docker image name |
-| `HADOLINT_VERSION` | `2.12.0` | Dockerfile linter version |
-| `ACT_VERSION` | `0.2.86` | Local CI runner version |
 
 ## CI/CD
 
@@ -34,6 +36,11 @@ make buildx-bootstrap  # create multi-platform buildx builder (required once)
   - `docker` -- builds and pushes multi-arch image to `ghcr.io` (runs only on tag pushes `v*`)
 - **`.github/workflows/cleanup-runs.yml`** -- weekly housekeeping for old workflow runs
 - Uses Docker Buildx with GHA caching
+
+## Upgrade Backlog
+
+- [ ] dlib v20.0.1 released 2026-03-29 — Ubuntu `libdlib-dev` apt package may lag; check periodically
+- [ ] `DOCKER_VERSION` in Makefile is informational only (no actual version check in `deps` target) — consider adding a real version check or removing the misleading `>=` from the error message
 
 ## Skills
 
