@@ -4,7 +4,6 @@
     "config:best-practices",
     ":semanticCommitType(chore)"
   ],
-  "commitMessagePrefix": "chore(all): ",
   "commitMessageAction": "update",
   "commitBody": "Signed-off-by: Renovate Bot <bot@renovateapp.com>",
   "labels": [
@@ -24,7 +23,7 @@
       "security"
     ],
     "automerge": true,
-    "minimumReleaseAge": "0 days"
+    "minimumReleaseAge": "0"
   },
   "lockFileMaintenance": {
     "enabled": true,

@@ -1,4 +1,5 @@
 [![CI](https://github.com/AndriyKalashnykov/dlib-docker/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/AndriyKalashnykov/dlib-docker/actions/workflows/ci.yml)
+[![GitHub Release](https://img.shields.io/github/v/release/AndriyKalashnykov/dlib-docker)](https://github.com/AndriyKalashnykov/dlib-docker/releases/latest)
 [![Hits](https://hits.sh/github.com/AndriyKalashnykov/dlib-docker.svg?view=today-total&style=plastic)](https://hits.sh/github.com/AndriyKalashnykov/dlib-docker/)
 [![License: CC0](https://img.shields.io/badge/License-CC0-brightgreen.svg)](https://creativecommons.org/publicdomain/zero/1.0/)
 [![Renovate enabled](https://img.shields.io/badge/renovate-enabled-brightgreen.svg)](https://app.renovatebot.com/dashboard#github/AndriyKalashnykov/dlib-docker)
@@ -23,9 +24,9 @@ make run               # run the image interactively (amd64)
 |------|---------|---------|
 | [GNU Make](https://www.gnu.org/software/make/) | 3.81+ | Build orchestration |
 | [Docker](https://www.docker.com/) | >= 27.5.1 | Container runtime and buildx |
-| [hadolint](https://github.com/hadolint/hadolint) | 2.12.0 | Dockerfile linting (auto-installed by `make lint`) |
+| [hadolint](https://github.com/hadolint/hadolint) | 2.14.0 | Dockerfile linting (auto-installed by `make lint`) |
 | [Git](https://git-scm.com/) | latest | Version control |
-| [act](https://github.com/nektos/act) | 0.2.86 | Run GitHub Actions locally (optional) |
+| [act](https://github.com/nektos/act) | 0.2.87 | Run GitHub Actions locally (optional) |
 
 Install all required dependencies:
 
