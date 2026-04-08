@@ -11,7 +11,7 @@ permissions:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' && !startsWith(github.ref, 'refs/tags/') }}
 
 jobs:
 
@@ -57,7 +57,7 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
-          password: ${{ secrets.GH_ACCESS_TOKEN }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Docker meta
         id: meta
@@ -70,8 +70,8 @@ jobs:
             type=semver,pattern=v{{version}}
           labels: |
             org.opencontainers.image.vendor=Andriy Kalashnykov - andriykalashnykov@gmail.com
-            org.opencontainers.image.title=Dlib Debian Docker image
-            org.opencontainers.image.description=Dlib Debian Docker image
+            org.opencontainers.image.title=Dlib Ubuntu Docker image
+            org.opencontainers.image.description=Dlib Ubuntu Docker image
             org.opencontainers.image.licenses=CC0
             org.opencontainers.image.version=${{ github.ref_name }}
             io.artifacthub.package.readme-url=https://raw.githubusercontent.com/AndriyKalashnykov/dlib-docker/main/README.md
@@ -84,9 +84,6 @@ jobs:
           context: .
           file: ./Dockerfile
           platforms: linux/arm/v7, linux/arm64, linux/amd64
-          build-args: |
-            BUILDER_IMAGE=ubuntu:noble-20260217
-            DLIB_VERSION=20.0
           push: true
           provenance: false
           tags: ${{ steps.meta.outputs.tags }}

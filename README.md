@@ -86,4 +86,4 @@ GitHub Actions runs on every push to `main`, tags `v*`, and pull requests.
 | **ci** | push, PR, tags | Lint |
 | **docker** | tag push (`v*`) | QEMU, Buildx, Build & Push to `ghcr.io` |
 
-[Renovate](https://docs.renovatebot.com/) keeps dependencies up to date with platform automerge enabled.
+[Renovate](https://docs.renovatebot.com/) keeps dependencies up to date via branch automerge (squash strategy).

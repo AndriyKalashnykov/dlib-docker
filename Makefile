@@ -1,9 +1,11 @@
 # ---------------------------------------------------------------------------
 # Tool versions
 # ---------------------------------------------------------------------------
-# renovate: datasource=docker depName=moby/moby
+# renovate: datasource=github-releases depName=moby/moby
 DOCKER_VERSION          := 27.5.1
+# renovate: datasource=github-tags depName=davisking/dlib
 DLIB_VERSION            := 20.0
+# renovate: datasource=docker depName=ubuntu
 BUILDER_IMAGE           := ubuntu:noble-20260217
 # renovate: datasource=github-releases depName=nektos/act
 ACT_VERSION             := 0.2.87
@@ -39,8 +41,14 @@ deps: #deps: @ Verify required toolchain dependencies
 
 deps-hadolint: #deps-hadolint: @ Install hadolint for Dockerfile linting
 	@command -v hadolint >/dev/null 2>&1 || { echo "Installing hadolint $(HADOLINT_VERSION)..."; \
-		curl -sSfL -o /tmp/hadolint https://github.com/hadolint/hadolint/releases/download/v$(HADOLINT_VERSION)/hadolint-Linux-x86_64 && \
-		install -m 755 /tmp/hadolint /usr/local/bin/hadolint && \
+		ARCH=$$(uname -m); \
+		case "$$ARCH" in \
+			x86_64) HADOLINT_ARCH=x86_64 ;; \
+			aarch64|arm64) HADOLINT_ARCH=arm64 ;; \
+			*) echo "ERROR: Unsupported architecture $$ARCH"; exit 1 ;; \
+		esac; \
+		curl -sSfL -o /tmp/hadolint https://github.com/hadolint/hadolint/releases/download/v$(HADOLINT_VERSION)/hadolint-Linux-$$HADOLINT_ARCH && \
+		sudo install -m 755 /tmp/hadolint /usr/local/bin/hadolint && \
 		rm -f /tmp/hadolint; \
 	}
 
@@ -72,7 +80,7 @@ build: deps #build: @ Build the dlib Docker image (alias for image-build)
 
 test: deps #test: @ Run container smoke test
 	@echo "Running smoke test..."
-	@docker run --rm $(IMAGE_NAME):amd64 dpkg -l | grep -q dlib && echo "PASS: dlib package found" || echo "FAIL: dlib package not found"
+	@docker run --rm $(IMAGE_NAME):amd64 dpkg -l | grep -q dlib && echo "PASS: dlib package found" || { echo "FAIL: dlib package not found"; exit 1; }
 
 lint: deps-hadolint #lint: @ Lint the Dockerfile with hadolint
 	@hadolint Dockerfile
@@ -95,8 +103,8 @@ release: #release: @ Create and push a new semver tag
 	fi
 	@echo -n "Are you sure to create and push $(NT) tag? [y/N] " && read ans && [ $${ans:-N} = y ]
 	@echo $(NT) > ./version.txt
-	@git add -A
-	@git commit -a -s -m "Cut $(NT) release"
+	@git add version.txt
+	@git commit -s -m "Cut $(NT) release"
 	@git tag $(NT)
 	@git push origin $(NT)
 	@git push
@@ -106,7 +114,7 @@ buildx-bootstrap: deps #buildx-bootstrap: @ Bootstrap multi-platform Docker buil
 	@docker buildx inspect multi-platform-builder >/dev/null 2>&1 || \
 		docker buildx create --use --platform=linux/arm64,linux/amd64,linux/arm/v7 --name multi-platform-builder --driver docker-container --bootstrap
 
-image-build: deps #image-build: @ Build dlib image for amd64, armv7, and arm64
+image-build: deps buildx-bootstrap #image-build: @ Build dlib image for amd64, armv7, and arm64
 	@docker buildx use multi-platform-builder
 	@docker buildx build --load --platform linux/amd64 -f Dockerfile --build-arg DLIB_VERSION=$(DLIB_VERSION) -t $(IMAGE_NAME):amd64 .
 	@docker buildx build --load --platform linux/arm/v7 -f Dockerfile --build-arg DLIB_VERSION=$(DLIB_VERSION) -t $(IMAGE_NAME):armv7 .

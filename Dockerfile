@@ -6,8 +6,9 @@ FROM ${BUILDER_IMAGE} AS builder
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG DLIB_VERSION=20.0
+ARG TARGETARCH
 
-RUN DEBIAN_FRONTEND=${DEBIAN_FRONTEND} apt-get update && \
+RUN apt-get update && \
     if [ "${TARGETARCH}" = "amd64" ] || [ "${TARGETARCH}" = "arm64" ]; then \
         dpkg --add-architecture arm64 && \
         dpkg --add-architecture armel && \
@@ -38,6 +39,10 @@ RUN DEBIAN_FRONTEND=${DEBIAN_FRONTEND} apt-get update && \
         libdlib-dev && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+
+RUN groupadd --gid 1000 appuser && \
+    useradd --uid 1000 --gid appuser --shell /bin/bash --create-home appuser
+USER appuser
 
 # Keep the container running
 CMD ["tail", "-f", "/dev/null"]

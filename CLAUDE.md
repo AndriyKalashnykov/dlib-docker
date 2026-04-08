@@ -32,7 +32,7 @@ make buildx-bootstrap  # create multi-platform buildx builder (required once)
 ## CI/CD
 
 - **`.github/workflows/ci.yml`** -- two jobs:
-  - `ci` -- lints Dockerfile via `make lint` (runs on all pushes and PRs)
+  - `ci` -- lints Dockerfile via `make lint` (runs on pushes to `main`, tag pushes `v*`, and all PRs)
   - `docker` -- builds and pushes multi-arch image to `ghcr.io` (runs only on tag pushes `v*`)
 - **`.github/workflows/cleanup-runs.yml`** -- weekly housekeeping for old workflow runs
 - Uses Docker Buildx with GHA caching
