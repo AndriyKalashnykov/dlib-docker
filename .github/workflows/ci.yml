@@ -63,6 +63,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
+      - name: Extract DLIB_VERSION from Makefile
+        id: dlib
+        run: echo "version=$(grep -oP '^DLIB_VERSION\s*:=\s*\K[\d.]+' Makefile)" >> "$GITHUB_OUTPUT"
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a # v4
 
@@ -106,6 +110,8 @@ jobs:
           push: true
           provenance: false
           sbom: false
+          build-args: |
+            DLIB_VERSION=${{ steps.dlib.outputs.version }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha

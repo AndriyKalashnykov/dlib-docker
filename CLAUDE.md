@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Multi-platform Docker image for [DLib](https://github.com/davisking/dlib) (C++ toolkit for machine learning). Builds for `linux/amd64`, `linux/arm64`, and `linux/arm/v7` using Ubuntu Noble as the base image with DLib installed from the Ubuntu `libdlib-dev` apt package (may lag upstream davisking/dlib releases).
+Multi-platform Docker image for [DLib](https://github.com/davisking/dlib) (C++ toolkit for machine learning). Builds for `linux/amd64`, `linux/arm64`, and `linux/arm/v7` using Ubuntu Noble as the base image with DLib compiled from source at the pinned upstream tag in `DLIB_VERSION` (Makefile). The project's git tag matches the dlib version it ships.
 
 ## Build & Test
 
@@ -22,7 +22,7 @@ make buildx-bootstrap  # create multi-platform buildx builder (standalone; build
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
-| `DLIB_VERSION` | `20.0` | Upstream DLib version the project targets (documentation only; install path is `libdlib-dev` apt package) |
+| `DLIB_VERSION` | `19.24.9` | Upstream davisking/dlib tag built from source in the Dockerfile (passed as `--build-arg`). Renovate-tracked via `datasource=github-tags depName=davisking/dlib`. Project convention: the git tag cut for a release matches this value. |
 | `ACT_VERSION` | `0.2.87` | Local CI runner version |
 | `HADOLINT_VERSION` | `2.14.0` | Dockerfile linter version |
 | `NVM_VERSION` | `0.40.4` | Node Version Manager version (Renovate tooling) |
@@ -43,10 +43,8 @@ The `ubuntu:noble-20260217` base image is pinned by digest in the Dockerfile and
 
 ## Upgrade Backlog
 
-- [ ] dlib v20.0.1 released 2026-03-29 — Ubuntu `libdlib-dev` apt package may lag; check periodically
 - [ ] Pre-push hardening missing (no Trivy image scan, no smoke test in CI, no cosign signing). Run `/harden-image-pipeline` for an interactive walkthrough.
-- [ ] Investigate why Renovate hasn't been auto-bumping action SHAs — `docker/build-push-action` was stale (now fixed manually). Check Renovate Dashboard (`app.renovatebot.com/dashboard#github/AndriyKalashnykov/dlib-docker`) next time a PR is opened.
-- [ ] Verify Renovate's `dockerfile` manager now tracks the inlined `FROM ubuntu:noble-20260217@sha256:...` line in the Dockerfile (the ARG indirection that was blocking it has been removed).
+- [ ] Verify Renovate tracks `DLIB_VERSION` correctly via the `github-tags` datasource — dlib git tags are `v`-prefixed (`v19.24.9`), Makefile stores bare (`19.24.9`). If Renovate produces false-positive bumps, add `versioning=semver-coerced` to the inline comment.
 
 ## Skills
 

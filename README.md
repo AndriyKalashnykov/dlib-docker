@@ -6,17 +6,17 @@
 
 # dlib-docker
 
-Multi-platform Docker image for [DLib](https://github.com/davisking/dlib) (C++ machine learning toolkit). Builds for `linux/amd64`, `linux/arm64`, and `linux/arm/v7` from Ubuntu Noble with DLib installed via the `libdlib-dev` apt package (version may lag upstream davisking/dlib releases).
+Multi-platform Docker image for [DLib](https://github.com/davisking/dlib) (C++ machine learning toolkit). Builds for `linux/amd64`, `linux/arm64`, and `linux/arm/v7` from Ubuntu Noble with DLib compiled from source at a pinned upstream tag (`DLIB_VERSION` in the Makefile). The project's git tag matches the dlib version it ships — `v19.24.9` → dlib 19.24.9, `v20.0.1` → dlib 20.0.1.
 
 | Component | Technology |
 |-----------|-----------|
 | Language | C++ (DLib toolkit) |
 | Base Image | `ubuntu:noble-20260217` (digest-pinned) |
-| DLib Source | `libdlib-dev` 20.0 (Ubuntu apt) |
+| DLib Source | Built from source at `v$DLIB_VERSION` (davisking/dlib tag) |
 | Platforms | `linux/amd64`, `linux/arm64`, `linux/arm/v7` |
 | Container Runtime | Docker + Buildx (multi-platform builder) |
 | Dockerfile Linter | [hadolint](https://github.com/hadolint/hadolint) 2.14.0 |
-| CI/CD | GitHub Actions + GHCR multi-arch push |
+| CI/CD | GitHub Actions + GHCR multi-arch push + GitHub Release |
 | Dependency Updates | [Renovate](https://docs.renovatebot.com/) (branch automerge, squash) |
 
 ## Quick Start
@@ -91,15 +91,16 @@ Run `make help` to see all available targets.
 
 ## Architecture
 
-The build uses Docker Buildx with QEMU emulation to produce one image per platform:
+The build uses Docker Buildx with QEMU emulation to produce one image per platform. Each platform build runs natively inside its own emulated environment, so apt and the dlib compile both produce target-native binaries.
 
-- **Base**: `ubuntu:noble-20260217` pinned by digest (via `ARG BUILDER_IMAGE`)
-- **Cross-build toolchains**: when building for `arm64`, the build stage installs `crossbuild-essential-arm64/armel/armhf` plus `libapparmor-dev` and `libseccomp-dev` for each architecture
-- **DLib + deps**: `libdlib-dev`, OpenBLAS, BLAS, ATLAS, LAPACK, GSL CBLAS, GFortran, libjpeg, libpng, GTK3 development headers
-- **Runtime user**: non-root `appuser` (uid 1000, gid 1000, home in `/home/appuser`)
+- **Base**: `ubuntu:noble-20260217` pinned by digest
+- **dlib build**: downloaded via `curl` from `github.com/davisking/dlib/archive/refs/tags/v$DLIB_VERSION.tar.gz`, then `cmake -DBUILD_SHARED_LIBS=ON -DDLIB_USE_BLAS=ON -DDLIB_USE_LAPACK=ON` → `make install` → `ldconfig`
+- **dlib deps** (from apt): OpenBLAS, BLAS, ATLAS, LAPACK, GSL CBLAS, GFortran, libjpeg-turbo, libpng, X11, GTK3 development headers; plus `build-essential`, `cmake`, `ca-certificates`, `curl`, `wget`, `net-tools` for the build and interactive use
+- **Output** (under `/usr/local`): `libdlib.so`, `libdlib.so.$DLIB_VERSION`, `include/dlib/*`, `lib/cmake/dlib/*`, `lib/pkgconfig/dlib-1.pc`
+- **Runtime user**: non-root `appuser` (uid 1000, gid 1000, home in `/home/appuser`). The default `ubuntu` user shipped by Noble's base image is removed first so `appuser` can take UID 1000.
 - **Default CMD**: `tail -f /dev/null` — the image is a utility container; consumers `docker run` it with their own command or `-it ... /bin/bash`
 
-On tag pushes (`v*`), CI builds and pushes all three platforms as a single multi-arch manifest to `ghcr.io/<owner>/dlib-docker`.
+On tag pushes (`v*`), CI builds and pushes all three platforms as a single multi-arch manifest to `ghcr.io/<owner>/dlib-docker`, creates a GitHub Release with auto-generated notes, and tags the image with the bare-semver rollup set: `$DLIB_VERSION`, `$MAJOR.$MINOR`, `$MAJOR`, `latest`. Project convention: the git tag matches the dlib version it ships (e.g., git `v20.0.1` → dlib 20.0.1).
 
 ## CI/CD
 

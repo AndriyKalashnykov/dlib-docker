@@ -1,10 +1,11 @@
 # ---------------------------------------------------------------------------
 # Tool versions (pinned; Renovate-tracked via inline comments)
 # ---------------------------------------------------------------------------
-# DLIB_VERSION documents the upstream davisking/dlib release the project
-# targets. The actual library is installed via the Ubuntu `libdlib-dev` apt
-# package, which may lag upstream — Renovate tracking is intentionally off.
-DLIB_VERSION            := 20.0
+# dlib is built from source in the Dockerfile at this exact upstream tag.
+# The git tag cut for a release should match DLIB_VERSION (project convention:
+# the project version == the dlib version it ships).
+# renovate: datasource=github-tags depName=davisking/dlib
+DLIB_VERSION            := 19.24.9
 # renovate: datasource=github-releases depName=nektos/act
 ACT_VERSION             := 0.2.87
 # renovate: datasource=github-releases depName=hadolint/hadolint
@@ -94,7 +95,7 @@ build: deps buildx-bootstrap #build: @ Build the dlib Docker image for all platf
 
 test: build #test: @ Run container smoke test
 	@echo "Running smoke test..."
-	@docker run --rm $(IMAGE_NAME):amd64 dpkg -l | grep -q dlib && echo "PASS: dlib package found" || { echo "FAIL: dlib package not found"; exit 1; }
+	@docker run --rm $(IMAGE_NAME):amd64 bash -c 'test -f /usr/local/include/dlib/matrix.h && ls /usr/local/lib/libdlib*.so* >/dev/null 2>&1' && echo "PASS: dlib headers + shared lib present" || { echo "FAIL: dlib not installed correctly"; exit 1; }
 
 lint: deps-hadolint #lint: @ Lint the Dockerfile with hadolint
 	@hadolint Dockerfile
