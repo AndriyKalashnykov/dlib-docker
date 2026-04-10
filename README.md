@@ -108,8 +108,30 @@ GitHub Actions runs on every push to `main`, tag pushes `v*`, and pull requests.
 
 | Job | Triggers | Steps |
 |-----|----------|-------|
-| **static-check** | push, PR, tags | Checkout, Static check (`make static-check` → hadolint) |
-| **docker** | tag push (`v*`) | QEMU, Buildx, Log in to GHCR, Docker metadata, Build and push (multi-arch → `ghcr.io`) |
-| **ci-pass** | always | Aggregates `static-check` + `docker` results for branch protection |
+| **static-check** | push, PR, tags | Checkout, Static check (`make static-check` → hadolint + trivy-fs) |
+| **docker** | tag push (`v*`) | QEMU, Buildx, Build image for scan, Trivy image scan, Smoke test, Log in to GHCR, Docker metadata, Build and push (multi-arch), Install cosign, Sign image with cosign, Create GitHub Release |
+| **ci-pass** | always | Aggregates `static-check` + `docker` results for branch protection (catches `failure` and `cancelled`) |
+
+### Pre-push image hardening
+
+The `docker` job runs the following gates **before** any image is pushed to `ghcr.io`. Any failure blocks the release.
+
+| # | Gate | Catches | Tool |
+|---|---|---|---|
+| 1 | Build local single-arch image | Build regressions on the runner architecture | `docker/build-push-action` with `load: true` |
+| 2 | **Trivy image scan** (CRITICAL/HIGH blocking) | CVEs in the Ubuntu base image, apt packages, and the compiled dlib layer — things the filesystem scan cannot see | `aquasecurity/trivy-action` with `image-ref:` |
+| 3 | **Smoke test** | The compiled dlib is actually installed: `/usr/local/include/dlib/matrix.h` + `/usr/local/lib/libdlib.so*` present | `docker run` + header/lib presence probe |
+| 4 | Multi-arch build + push | Publishes `linux/amd64`, `linux/arm64`, and `linux/arm/v7` as a single manifest | `docker/build-push-action` |
+| 5 | **Cosign keyless OIDC signing** | Sigstore signature on the manifest digest | `sigstore/cosign-installer` + `cosign sign --yes <tag>@<digest>` |
+
+Buildkit in-manifest attestations (`provenance` + `sbom`) are disabled so the image index stays free of `unknown/unknown` platform entries — this lets the GHCR Packages UI render the "OS / Arch" tab for the multi-arch manifest. Cosign keyless signing provides the Sigstore signature for supply-chain verification without in-manifest attestations.
+
+Verify a published image's signature:
+
+```bash
+cosign verify ghcr.io/andriykalashnykov/dlib-docker:20.0.1 \
+  --certificate-identity-regexp 'https://github\.com/AndriyKalashnykov/dlib-docker/.+' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com
+```
 
 [Renovate](https://docs.renovatebot.com/) keeps dependencies up to date via platform branch automerge (squash strategy). A weekly `cleanup-runs.yml` workflow prunes old workflow runs and stale GitHub Actions caches.

@@ -35,16 +35,15 @@ The `ubuntu:noble-20260217` base image is pinned by digest in the Dockerfile and
 ## CI/CD
 
 - **`.github/workflows/ci.yml`** -- three jobs:
-  - `static-check` -- composite quality gate, runs `make static-check` (currently hadolint). Runs on pushes to `main`, tag pushes `v*`, and all PRs.
-  - `docker` -- builds and pushes multi-arch image to `ghcr.io` (runs only on tag pushes `v*`, after `static-check` passes)
-  - `ci-pass` -- aggregating gate job with `if: always()` and `needs: [static-check, docker]`, for branch protection
+  - `static-check` -- composite quality gate, runs `make static-check` (hadolint + trivy-fs). Runs on pushes to `main`, tag pushes `v*`, and all PRs.
+  - `docker` -- on tag pushes `v*` only, runs the full hardening pipeline: build for scan → Trivy image scan (CRITICAL/HIGH blocking) → smoke test → multi-arch build and push → cosign keyless OIDC signing → create GitHub Release. Tag-gated at job level with 90-min budget for the QEMU-emulated dlib compile.
+  - `ci-pass` -- aggregating gate job with `if: always()` and `needs: [static-check, docker]`, for branch protection. Catches both `failure` and `cancelled` results.
 - **`.github/workflows/cleanup-runs.yml`** -- weekly housekeeping: prunes old workflow runs (`cleanup-runs` job) and stale GitHub Actions caches from deleted branches (`cleanup-caches` job)
-- Uses Docker Buildx with GHA caching; `provenance: false` + `sbom: false` keep the image index clean so GHCR's "OS / Arch" tab renders
+- Uses Docker Buildx with GHA caching; `provenance: false` + `sbom: false` keep the image index clean so GHCR's "OS / Arch" tab renders; cosign keyless signing via Sigstore Fulcio provides supply-chain verification without in-manifest attestations
 
 ## Upgrade Backlog
 
-- [ ] Pre-push hardening missing (no Trivy image scan, no smoke test in CI, no cosign signing). Run `/harden-image-pipeline` for an interactive walkthrough.
-- [ ] Verify Renovate tracks `DLIB_VERSION` correctly via the `github-tags` datasource — dlib git tags are `v`-prefixed (`v19.24.9`), Makefile stores bare (`19.24.9`). If Renovate produces false-positive bumps, add `versioning=semver-coerced` to the inline comment.
+- [ ] Verify Renovate tracks `DLIB_VERSION` correctly via the `github-tags` datasource — dlib git tags are `v`-prefixed (`v20.0.1`), Makefile stores bare (`20.0.1`). If Renovate produces false-positive bumps, add `versioning=semver-coerced` to the inline comment.
 
 ## Skills
 

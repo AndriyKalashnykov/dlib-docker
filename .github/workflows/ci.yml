@@ -59,8 +59,9 @@ jobs:
     # and gui_core modules. 90 min gives a safe buffer.
     timeout-minutes: 90
     permissions:
-      contents: write       # needed for `gh release create`
-      packages: write
+      contents: write       # gh release create
+      packages: write       # registry push (GHCR)
+      id-token: write       # cosign keyless OIDC (Sigstore Fulcio)
 
     steps:
       - name: Checkout
@@ -75,6 +76,48 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4
+
+      # =================================================================
+      # GATE 1: single-arch local build for scanning + smoke testing
+      # =================================================================
+      - name: Build image for scan
+        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64
+          load: true
+          tags: dlib-docker:scan
+          build-args: |
+            DLIB_VERSION=${{ steps.dlib.outputs.version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # =================================================================
+      # GATE 2: Trivy image scan (CRITICAL/HIGH blocking)
+      # Catches CVEs in the base image, apt packages, and build artifacts
+      # that the filesystem scan cannot see.
+      # =================================================================
+      - name: Trivy image scan
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        with:
+          image-ref: 'dlib-docker:scan'
+          scanners: 'vuln,secret,misconfig'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'
+          ignore-unfixed: true
+
+      # =================================================================
+      # GATE 3: smoke test — process-up + dlib headers/shared lib present.
+      # This is a utility container (CMD tail -f /dev/null); the check
+      # verifies the from-source build actually installed dlib under
+      # /usr/local. Matches the Makefile `make test` target.
+      # =================================================================
+      - name: Smoke test
+        run: |
+          set -euo pipefail
+          docker run --rm dlib-docker:scan bash -c \
+            'test -f /usr/local/include/dlib/matrix.h && ls /usr/local/lib/libdlib.so*'
 
       - name: Log in to GHCR
         uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
@@ -104,7 +147,13 @@ jobs:
             io.artifacthub.package.maintainers=[{"name":"Andriy Kalashnykov","email":"andriykalashnykov@gmail.com"}]
             io.artifacthub.package.license=CC0
 
+      # =================================================================
+      # GATE 4: multi-arch build + push (all gates above passed)
+      # cache-from: type=gha is ~95% cache-hit from the scan build above,
+      # so this second build only compiles the arm platforms under QEMU.
+      # =================================================================
       - name: Build and push
+        id: push
         uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
         with:
           context: .
@@ -119,6 +168,27 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      # =================================================================
+      # GATE 5: cosign keyless OIDC signing.
+      # No long-lived keys — uses GitHub OIDC → Sigstore Fulcio → Rekor.
+      # Signs by digest so the signature covers the exact published
+      # manifest regardless of tag mutation.
+      # =================================================================
+      - name: Install cosign
+        uses: sigstore/cosign-installer@cad07c2e89fa2edd6e2d7bab4c1aa38e53f76003 # v4.1.1
+
+      - name: Sign image with cosign
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+          DIGEST: ${{ steps.push.outputs.digest }}
+        run: |
+          set -euo pipefail
+          while IFS= read -r tag; do
+            [ -z "$tag" ] && continue
+            echo "→ cosign sign ${tag}@${DIGEST}"
+            cosign sign --yes "${tag}@${DIGEST}"
+          done <<< "${TAGS}"
 
       - name: Create GitHub Release
         env:
