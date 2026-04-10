@@ -43,7 +43,7 @@ The `ubuntu:noble-20260217` base image is pinned by digest in the Dockerfile and
 
 ## Upgrade Backlog
 
-- [ ] Verify Renovate tracks `DLIB_VERSION` correctly via the `github-tags` datasource — dlib git tags are `v`-prefixed (`v20.0.1`), Makefile stores bare (`20.0.1`). If Renovate produces false-positive bumps, add `versioning=semver-coerced` to the inline comment.
+_(No open items. Renovate `github-tags` tracking for `DLIB_VERSION` was verified via `npx renovate --platform=local --dry-run=lookup` — Renovate auto-selects `versioning: semver-coerced` for the davisking/dlib datasource, so the bare `20.0.1` in the Makefile matches upstream `v20.0.1` without any inline `versioning=` hint. All 5 regex-tracked tools — dlib, act, hadolint, trivy, nvm — extract correctly and report `updates: []` + `warnings: []`.)_
 
 ## Skills
 
