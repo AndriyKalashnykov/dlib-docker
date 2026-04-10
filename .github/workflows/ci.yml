@@ -54,7 +54,10 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/')
     needs: [static-check]
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # dlib is built from source via cmake + make. Multi-arch under QEMU
+    # (arm64, arm/v7) takes ~30-45 min per platform to compile gui_widgets
+    # and gui_core modules. 90 min gives a safe buffer.
+    timeout-minutes: 90
     permissions:
       contents: write       # needed for `gh release create`
       packages: write
@@ -135,7 +138,9 @@ jobs:
     steps:
       - name: Verify all jobs passed
         run: |
-          if [[ "${{ contains(needs.*.result, 'failure') }}" == "true" ]]; then
-            echo "One or more jobs failed"
+          if [[ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
+            echo "One or more upstream jobs failed or were cancelled"
+            echo "  static-check: ${{ needs.static-check.result }}"
+            echo "  docker:       ${{ needs.docker.result }}"
             exit 1
           fi
