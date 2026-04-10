@@ -4,24 +4,10 @@ FROM ubuntu:noble-20260217@sha256:186072bba1b2f436cbb91ef2567abca677337cfc786c86
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG DLIB_VERSION=20.0
-ARG TARGETARCH
 
+# Each platform build runs natively under QEMU (via docker buildx --platform),
+# so apt pulls packages native to the target arch. No cross-compilation needed.
 RUN apt-get update && \
-    if [ "${TARGETARCH}" = "amd64" ] || [ "${TARGETARCH}" = "arm64" ]; then \
-        dpkg --add-architecture arm64 && \
-        dpkg --add-architecture armel && \
-        dpkg --add-architecture armhf && \
-        apt-get update && apt-get install -y --no-install-recommends \
-            crossbuild-essential-arm64 \
-            crossbuild-essential-armel \
-            crossbuild-essential-armhf \
-            libapparmor-dev:arm64 \
-            libapparmor-dev:armel \
-            libapparmor-dev:armhf \
-            libseccomp-dev:arm64 \
-            libseccomp-dev:armel \
-            libseccomp-dev:armhf; \
-    fi && \
     apt-get install -y --no-install-recommends \
         build-essential cmake curl wget net-tools \
         libopenblas-dev \
@@ -38,7 +24,8 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-RUN groupadd --gid 1000 appuser && \
+RUN userdel -r ubuntu 2>/dev/null || true && \
+    groupadd --gid 1000 appuser && \
     useradd --uid 1000 --gid appuser --shell /bin/bash --create-home appuser
 USER appuser
 
