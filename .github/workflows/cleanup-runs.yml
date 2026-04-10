@@ -4,13 +4,20 @@ on:
   schedule:
     - cron: '0 0 * * 0'
   workflow_dispatch:
+  workflow_call:
+
+concurrency:
+  group: cleanup-${{ github.workflow }}
+  cancel-in-progress: true
 
 permissions:
   actions: write
+  contents: read
 
 jobs:
-  cleanup:
+  cleanup-runs:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     env:
       GH_TOKEN: ${{ github.token }}
       RETAIN_DAYS: 7
@@ -23,3 +30,22 @@ jobs:
             --json databaseId,createdAt --limit 200 \
             --jq "sort_by(.createdAt) | reverse | .[$KEEP_MINIMUM:] | .[] | select(.createdAt < \"$CUTOFF\") | .databaseId" \
           | xargs -r -I{} gh run delete {} --repo "${{ github.repository }}"
+
+  cleanup-caches:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Delete stale caches
+        run: |
+          gh cache list --repo "${{ github.repository }}" --limit 100 \
+            --json id,ref \
+            --jq '.[] | select(.ref | startswith("refs/heads/")) | "\(.id) \(.ref)"' | \
+          while read -r id ref; do
+            branch="${ref#refs/heads/}"
+            if ! gh api "repos/${{ github.repository }}/branches/$branch" >/dev/null 2>&1; then
+              echo "Deleting cache $id for stale branch $branch"
+              gh cache delete "$id" --repo "${{ github.repository }}" || true
+            fi
+          done

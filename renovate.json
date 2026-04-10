@@ -4,6 +4,12 @@
     "config:best-practices",
     ":semanticCommitType(chore)"
   ],
+  "enabledManagers": [
+    "dockerfile",
+    "github-actions",
+    "custom.regex"
+  ],
+  "commitMessagePrefix": "chore(all): ",
   "commitMessageAction": "update",
   "commitBody": "Signed-off-by: Renovate Bot <bot@renovateapp.com>",
   "labels": [
@@ -16,8 +22,6 @@
   "automergeType": "branch",
   "automergeStrategy": "squash",
   "ignoreTests": false,
-  "assigneesFromCodeOwners": true,
-  "reviewersFromCodeOwners": true,
   "vulnerabilityAlerts": {
     "labels": [
       "security"
@@ -34,13 +38,12 @@
   },
   "customManagers": [
     {
-      "description": "Track tool versions in Makefile via inline renovate comments",
       "customType": "regex",
+      "description": "Update Makefile tool versions via inline renovate comments",
       "managerFilePatterns": ["/^Makefile$/"],
       "matchStrings": [
-        "# renovate: datasource=(?<datasource>[a-z-]+) depName=(?<depName>[^\\s]+)\\n[A-Z_]+\\s*:=\\s*(?<currentValue>[^\\s]+)"
-      ],
-      "extractVersionTemplate": "^v?(?<version>.+)$"
+        "# renovate: datasource=(?<datasource>[^\\s]+) depName=(?<depName>[^\\s]+)( versioning=(?<versioning>[^\\s]+))?\\n[A-Z_]+\\s*:=\\s*(?<currentValue>[^\\s]+)"
+      ]
     }
   ],
   "packageRules": [

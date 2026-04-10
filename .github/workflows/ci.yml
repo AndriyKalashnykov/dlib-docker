@@ -4,41 +4,64 @@ on:
   push:
     branches: [main]
     tags: ['v*']
+    paths-ignore:
+      - '*.md'
+      - '!CLAUDE.md'
+      - 'docs/**'
+      - 'LICENSE'
+      - '.gitignore'
+      - '.claudeignore'
+      - '.claude/**'
+      - '**.png'
+      - '**.jpg'
+      - '**.gif'
+      - '**.svg'
   pull_request:
+    paths-ignore:
+      - '*.md'
+      - '!CLAUDE.md'
+      - 'docs/**'
+      - 'LICENSE'
+      - '.gitignore'
+      - '.claudeignore'
+      - '.claude/**'
+      - '**.png'
+      - '**.jpg'
+      - '**.gif'
+      - '**.svg'
+  workflow_call:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' && !startsWith(github.ref, 'refs/tags/') }}
-
 jobs:
 
-  ci:
+  static-check:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
-      - name: Lint
-        run: make lint
+      - name: Static check
+        run: make static-check
 
   docker:
     if: startsWith(github.ref, 'refs/tags/')
-    needs: ci
+    needs: [static-check]
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
-      contents: read
+      contents: write       # needed for `gh release create`
       packages: write
-    env:
-      REGISTRY: ghcr.io
 
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-        with:
-          fetch-depth: 0
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a # v4
@@ -46,28 +69,24 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4
 
-      - name: Convert owner to lower case
-        run: |
-          echo "OWNER_LC=${OWNER,,}" >>${GITHUB_ENV}
-        env:
-          OWNER: '${{ github.repository_owner }}'
-
-      - name: Login to image repository
+      - name: Log in to GHCR
         uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
-          registry: ${{ env.REGISTRY }}
+          registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Docker meta
+      - name: Docker metadata
         id: meta
         uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf # v6
         with:
-          images: ${{ env.REGISTRY }}/${{ env.OWNER_LC }}/dlib-docker
+          images: ghcr.io/${{ github.repository }}
           flavor: |
-            latest=false
+            latest=true
           tags: |
-            type=semver,pattern=v{{version}}
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
           labels: |
             org.opencontainers.image.vendor=Andriy Kalashnykov - andriykalashnykov@gmail.com
             org.opencontainers.image.title=Dlib Ubuntu Docker image
@@ -78,15 +97,39 @@ jobs:
             io.artifacthub.package.maintainers=[{"name":"Andriy Kalashnykov","email":"andriykalashnykov@gmail.com"}]
             io.artifacthub.package.license=CC0
 
-      - name: Build and push image
-        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7
+      - name: Build and push
+        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
         with:
           context: .
           file: ./Dockerfile
-          platforms: linux/arm/v7, linux/arm64, linux/amd64
+          platforms: linux/arm/v7,linux/arm64,linux/amd64
           push: true
           provenance: false
+          sbom: false
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "${{ github.ref_name }}" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            echo "Release ${{ github.ref_name }} already exists (likely created by 'make release'). Skipping."
+          else
+            gh release create "${{ github.ref_name }}" --generate-notes --verify-tag --title "${{ github.ref_name }}"
+          fi
+
+  ci-pass:
+    if: always()
+    needs: [static-check, docker]
+    timeout-minutes: 2
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify all jobs passed
+        run: |
+          if [[ "${{ contains(needs.*.result, 'failure') }}" == "true" ]]; then
+            echo "One or more jobs failed"
+            exit 1
+          fi

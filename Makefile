@@ -1,27 +1,33 @@
 # ---------------------------------------------------------------------------
-# Tool versions
+# Tool versions (pinned; Renovate-tracked via inline comments)
 # ---------------------------------------------------------------------------
-# renovate: datasource=github-releases depName=moby/moby
-DOCKER_VERSION          := 27.5.1
-# renovate: datasource=github-tags depName=davisking/dlib
+# DLIB_VERSION documents the upstream davisking/dlib release the project
+# targets. The actual library is installed via the Ubuntu `libdlib-dev` apt
+# package, which may lag upstream — Renovate tracking is intentionally off.
 DLIB_VERSION            := 20.0
-# renovate: datasource=docker depName=ubuntu
-BUILDER_IMAGE           := ubuntu:noble-20260217
 # renovate: datasource=github-releases depName=nektos/act
 ACT_VERSION             := 0.2.87
 # renovate: datasource=github-releases depName=hadolint/hadolint
 HADOLINT_VERSION        := 2.14.0
+# renovate: datasource=github-releases depName=aquasecurity/trivy
+TRIVY_VERSION           := 0.69.3
 # renovate: datasource=github-releases depName=nvm-sh/nvm
 NVM_VERSION             := 0.40.4
+NODE_VERSION            := $(shell cat .nvmrc 2>/dev/null || echo 22)
 
 # ---------------------------------------------------------------------------
 # Project variables
 # ---------------------------------------------------------------------------
-projectname             ?= dlib-docker
-IMAGE_NAME              := anriykalashnykov/dblib-docker
+APP_NAME                := dlib-docker
+IMAGE_NAME              := andriykalashnykov/dlib-docker
 CURRENTTAG              := $(shell git describe --tags --abbrev=0 2>/dev/null || echo "none")
 NEWTAG                  ?= $(shell bash -c 'read -p "Please provide a new tag (current tag - $(CURRENTTAG)): " newtag; echo $$newtag')
 SEMVER_REGEX            := ^v[0-9]+\.[0-9]+\.[0-9]+$$
+
+# Ensure tools installed to ~/.local/bin (hadolint, act) are on PATH for
+# every recipe — needed inside act containers where this path is not
+# preconfigured. Exported so every sub-shell the recipes spawn inherits it.
+export PATH := $(HOME)/.local/bin:$(PATH)
 
 # ---------------------------------------------------------------------------
 # Settings
@@ -32,11 +38,13 @@ SEMVER_REGEX            := ^v[0-9]+\.[0-9]+\.[0-9]+$$
 # Targets
 # ---------------------------------------------------------------------------
 
-help: #help: @ List available make targets
-	@grep -E '^[a-zA-Z_-]+:.*#[a-zA-Z_-]+: @ .*$$' $(MAKEFILE_LIST) | sort | awk '{split($$0, a, "#"); split(a[2], b, ": @ "); printf "\033[36m%-25s\033[0m %s\n", b[1], b[2]}'
+help: #help: @ List available tasks
+	@echo "Usage: make COMMAND"
+	@echo "Commands :"
+	@grep -E '[a-zA-Z0-9\.\-]+:.*?@ .*$$' $(MAKEFILE_LIST)| tr -d '#' | awk 'BEGIN {FS = ":.*?@ "}; {printf "\033[32m%-22s\033[0m - %s\n", $$1, $$2}'
 
 deps: #deps: @ Verify required toolchain dependencies
-	@command -v docker >/dev/null 2>&1 || { echo "ERROR: docker (>= $(DOCKER_VERSION)) is required but not found. Aborting."; exit 1; }
+	@command -v docker >/dev/null 2>&1 || { echo "ERROR: docker is required but not found. Aborting."; exit 1; }
 	@echo "All dependencies satisfied."
 
 deps-hadolint: #deps-hadolint: @ Install hadolint for Dockerfile linting
@@ -47,94 +55,106 @@ deps-hadolint: #deps-hadolint: @ Install hadolint for Dockerfile linting
 			aarch64|arm64) HADOLINT_ARCH=arm64 ;; \
 			*) echo "ERROR: Unsupported architecture $$ARCH"; exit 1 ;; \
 		esac; \
+		mkdir -p $$HOME/.local/bin; \
 		curl -sSfL -o /tmp/hadolint https://github.com/hadolint/hadolint/releases/download/v$(HADOLINT_VERSION)/hadolint-Linux-$$HADOLINT_ARCH && \
-		sudo install -m 755 /tmp/hadolint /usr/local/bin/hadolint && \
+		install -m 755 /tmp/hadolint $$HOME/.local/bin/hadolint && \
 		rm -f /tmp/hadolint; \
 	}
 
 deps-act: deps #deps-act: @ Install act for local CI execution
 	@command -v act >/dev/null 2>&1 || { echo "Installing act $(ACT_VERSION)..."; \
-		curl -sSfL https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash -s -- -b /usr/local/bin v$(ACT_VERSION); \
+		mkdir -p $$HOME/.local/bin; \
+		curl -sSfL https://raw.githubusercontent.com/nektos/act/master/install.sh | bash -s -- -b $$HOME/.local/bin v$(ACT_VERSION); \
 	}
 
-deps-renovate: #deps-renovate: @ Install nvm and npm for Renovate
+deps-trivy: #deps-trivy: @ Install Trivy for filesystem security scanning
+	@command -v trivy >/dev/null 2>&1 || { echo "Installing trivy $(TRIVY_VERSION)..."; \
+		mkdir -p $$HOME/.local/bin; \
+		curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b $$HOME/.local/bin v$(TRIVY_VERSION); \
+	}
+
+renovate-bootstrap: #renovate-bootstrap: @ Install nvm and Node for Renovate
 	@if [ ! -d "$$HOME/.nvm" ]; then \
 		echo "Installing nvm $(NVM_VERSION)..."; \
 		curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v$(NVM_VERSION)/install.sh | bash; \
-		export NVM_DIR="$$HOME/.nvm"; \
-		[ -s "$$NVM_DIR/nvm.sh" ] && . "$$NVM_DIR/nvm.sh"; \
-		nvm install --lts; \
-		nvm use --lts; \
-	else \
-		echo "nvm already installed"; \
-		export NVM_DIR="$$HOME/.nvm"; \
-		[ -s "$$NVM_DIR/nvm.sh" ] && . "$$NVM_DIR/nvm.sh"; \
 	fi
+	@export NVM_DIR="$$HOME/.nvm"; \
+		[ -s "$$NVM_DIR/nvm.sh" ] && . "$$NVM_DIR/nvm.sh"; \
+		nvm install $(NODE_VERSION); \
+		nvm use $(NODE_VERSION)
 
 clean: #clean: @ Remove build artefacts and temporary files
-	@rm -f version.txt
 	@echo "Clean complete."
 
-build: deps #build: @ Build the dlib Docker image (alias for image-build)
-	@$(MAKE) --no-print-directory image-build
+build: deps buildx-bootstrap #build: @ Build the dlib Docker image for all platforms
+	@docker buildx use multi-platform-builder
+	@docker buildx build --load --platform linux/amd64 -f Dockerfile --build-arg DLIB_VERSION=$(DLIB_VERSION) -t $(IMAGE_NAME):amd64 .
+	@docker buildx build --load --platform linux/arm/v7 -f Dockerfile --build-arg DLIB_VERSION=$(DLIB_VERSION) -t $(IMAGE_NAME):armv7 .
+	@docker buildx build --load --platform linux/arm64 -f Dockerfile --build-arg DLIB_VERSION=$(DLIB_VERSION) -t $(IMAGE_NAME):arm64 .
 
-test: deps #test: @ Run container smoke test
+test: build #test: @ Run container smoke test
 	@echo "Running smoke test..."
 	@docker run --rm $(IMAGE_NAME):amd64 dpkg -l | grep -q dlib && echo "PASS: dlib package found" || { echo "FAIL: dlib package not found"; exit 1; }
 
 lint: deps-hadolint #lint: @ Lint the Dockerfile with hadolint
 	@hadolint Dockerfile
 
+trivy-fs: deps-trivy #trivy-fs: @ Scan filesystem for vulnerabilities, secrets, and misconfigurations
+	@trivy fs --scanners vuln,secret,misconfig --severity CRITICAL,HIGH --exit-code 1 --ignore-unfixed .
+
+static-check: lint trivy-fs #static-check: @ Composite quality gate (lint + trivy-fs)
+	@echo "Static check passed."
+
 run: deps #run: @ Run the dlib Docker image interactively (amd64)
 	@docker run --rm -it $(IMAGE_NAME):amd64 /bin/bash
 
-ci: deps lint build test #ci: @ Run full CI pipeline (deps, lint, build, test)
+ci: deps static-check build test #ci: @ Run full CI pipeline (deps, static-check, build, test)
 	@echo "CI pipeline complete."
 
 ci-run: deps-act #ci-run: @ Run GitHub Actions workflow locally using act
+	@docker container prune -f 2>/dev/null || true
 	@act push --container-architecture linux/amd64 \
 		--artifact-server-path /tmp/act-artifacts
 
-release: #release: @ Create and push a new semver tag
+release: #release: @ Create and push a semver tag + GitHub Release
 	$(eval NT=$(NEWTAG))
 	@if ! echo "$(NT)" | grep -qE '$(SEMVER_REGEX)'; then \
 		echo "ERROR: Tag '$(NT)' does not match semver pattern $(SEMVER_REGEX)"; \
 		exit 1; \
 	fi
-	@echo -n "Are you sure to create and push $(NT) tag? [y/N] " && read ans && [ $${ans:-N} = y ]
-	@echo $(NT) > ./version.txt
-	@git add version.txt
-	@git commit -s -m "Cut $(NT) release"
+	@command -v gh >/dev/null 2>&1 || { echo "ERROR: gh CLI required for release creation"; exit 1; }
+	@echo -n "Are you sure to create and push $(NT) tag + GitHub Release? [y/N] " && read ans && [ $${ans:-N} = y ]
 	@git tag $(NT)
 	@git push origin $(NT)
-	@git push
+	@gh release create $(NT) --generate-notes --verify-tag --title "$(NT)"
 	@echo "Done."
 
 buildx-bootstrap: deps #buildx-bootstrap: @ Bootstrap multi-platform Docker buildx builder
 	@docker buildx inspect multi-platform-builder >/dev/null 2>&1 || \
 		docker buildx create --use --platform=linux/arm64,linux/amd64,linux/arm/v7 --name multi-platform-builder --driver docker-container --bootstrap
 
-image-build: deps buildx-bootstrap #image-build: @ Build dlib image for amd64, armv7, and arm64
-	@docker buildx use multi-platform-builder
-	@docker buildx build --load --platform linux/amd64 -f Dockerfile --build-arg DLIB_VERSION=$(DLIB_VERSION) -t $(IMAGE_NAME):amd64 .
-	@docker buildx build --load --platform linux/arm/v7 -f Dockerfile --build-arg DLIB_VERSION=$(DLIB_VERSION) -t $(IMAGE_NAME):armv7 .
-	@docker buildx build --load --platform linux/arm64 -f Dockerfile --build-arg DLIB_VERSION=$(DLIB_VERSION) -t $(IMAGE_NAME):arm64 .
-
-image-run: deps #image-run: @ Run dlib images interactively for all platforms
-	@docker run --rm -it $(IMAGE_NAME):armv7 /bin/bash
-	@docker run --rm -it $(IMAGE_NAME):arm64 /bin/bash
+image-run-amd64: deps #image-run-amd64: @ Run dlib image interactively (amd64)
 	@docker run --rm -it $(IMAGE_NAME):amd64 /bin/bash
 
-tag-delete: #tag-delete: @ Delete a specific tag locally and from remote
-	@rm -f version.txt
-	@git push --delete origin v$(DLIB_VERSION).0
-	@git tag --delete v$(DLIB_VERSION).0
+image-run-arm64: deps #image-run-arm64: @ Run dlib image interactively (arm64)
+	@docker run --rm -it $(IMAGE_NAME):arm64 /bin/bash
 
-renovate-bootstrap: deps-renovate #renovate-bootstrap: @ Install nvm and npm for Renovate
-	@echo "Renovate dependencies ready."
+image-run-armv7: deps #image-run-armv7: @ Run dlib image interactively (arm/v7)
+	@docker run --rm -it $(IMAGE_NAME):armv7 /bin/bash
 
-renovate-validate: deps-renovate #renovate-validate: @ Validate Renovate configuration
-	@npx -p renovate -c 'renovate-config-validator'
+tag-delete: #tag-delete: @ Delete a tag locally and from remote (TAG=vX.Y.Z)
+	@if [ -z "$(TAG)" ]; then echo "ERROR: TAG is required (e.g., make tag-delete TAG=v20.0.0)"; exit 1; fi
+	@git push --delete origin $(TAG)
+	@git tag --delete $(TAG)
 
-.PHONY: help deps deps-hadolint deps-act deps-renovate clean build test lint run ci ci-run \
-	release buildx-bootstrap image-build image-run tag-delete renovate-bootstrap renovate-validate
+renovate-validate: renovate-bootstrap #renovate-validate: @ Validate Renovate configuration
+	@export NVM_DIR="$$HOME/.nvm"; \
+		[ -s "$$NVM_DIR/nvm.sh" ] && . "$$NVM_DIR/nvm.sh"; \
+		if [ -n "$$GH_ACCESS_TOKEN" ]; then \
+			GITHUB_COM_TOKEN=$$GH_ACCESS_TOKEN npx -p renovate -c 'renovate-config-validator'; \
+		else \
+			npx -p renovate -c 'renovate-config-validator'; \
+		fi
+
+.PHONY: help deps deps-hadolint deps-act deps-trivy renovate-bootstrap clean build test lint trivy-fs static-check run ci ci-run \
+	release buildx-bootstrap image-run-amd64 image-run-arm64 image-run-armv7 tag-delete renovate-validate
