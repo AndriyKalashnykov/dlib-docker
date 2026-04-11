@@ -197,15 +197,40 @@ jobs:
             cosign sign --yes "${tag}@${DIGEST}"
           done <<< "${TAGS}"
 
-      - name: Create GitHub Release
+      - name: Create or publish GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if gh release view "${{ github.ref_name }}" --repo "${{ github.repository }}" >/dev/null 2>&1; then
-            echo "Release ${{ github.ref_name }} already exists (likely created by 'make release'). Skipping."
-          else
-            gh release create "${{ github.ref_name }}" --generate-notes --verify-tag --title "${{ github.ref_name }}"
-          fi
+          set -euo pipefail
+          TAG="${{ github.ref_name }}"
+          # Three-way state machine: missing / draft / published.
+          #
+          # The previous simpler "skip if `gh release view` succeeds" logic
+          # has a footgun: deleting a git tag that already has a published
+          # GitHub Release demotes the release to DRAFT state (GitHub
+          # behavior, not reversible via tag push). `gh release view`
+          # still finds draft releases, so the skip path triggers and the
+          # release stays as a permanent draft, invisible to shields.io
+          # and to anonymous consumers of the Releases UI. This bit us on
+          # 2026-04-11 after the libdlib.a fix re-cut v19.24.9 + v20.0.1.
+          #
+          # Fix: inspect .isDraft and promote drafts explicitly.
+          existing=$(gh release view "$TAG" --repo "${{ github.repository }}" \
+            --json isDraft --jq '.isDraft' 2>/dev/null || echo missing)
+          case "$existing" in
+            missing)
+              echo "No release for $TAG — creating one"
+              gh release create "$TAG" --repo "${{ github.repository }}" \
+                --verify-tag --generate-notes --title "$TAG"
+              ;;
+            false)
+              echo "Published release for $TAG already exists — nothing to do"
+              ;;
+            true)
+              echo "Draft release for $TAG exists (leftover from a tag re-push) — promoting to published"
+              gh release edit "$TAG" --repo "${{ github.repository }}" --draft=false
+              ;;
+          esac
 
   ci-pass:
     if: always()
