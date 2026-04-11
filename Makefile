@@ -5,7 +5,7 @@
 # The git tag cut for a release should match DLIB_VERSION (project convention:
 # the project version == the dlib version it ships).
 # renovate: datasource=github-tags depName=davisking/dlib
-DLIB_VERSION            := 20.0.1
+DLIB_VERSION            := 19.24.9
 # renovate: datasource=github-releases depName=nektos/act
 ACT_VERSION             := 0.2.87
 # renovate: datasource=github-releases depName=hadolint/hadolint
