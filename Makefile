@@ -95,7 +95,12 @@ build: deps buildx-bootstrap #build: @ Build the dlib Docker image for all platf
 
 test: build #test: @ Run container smoke test
 	@echo "Running smoke test..."
-	@docker run --rm $(IMAGE_NAME):amd64 bash -c 'test -f /usr/local/include/dlib/matrix.h && ls /usr/local/lib/libdlib*.so* >/dev/null 2>&1' && echo "PASS: dlib headers + shared lib present" || { echo "FAIL: dlib not installed correctly"; exit 1; }
+	@docker run --rm $(IMAGE_NAME):amd64 bash -c '\
+		test -f /usr/local/include/dlib/matrix.h && \
+		ls /usr/local/lib/libdlib*.so* >/dev/null 2>&1 && \
+		test -f /usr/local/lib/libdlib.a' \
+		&& echo "PASS: dlib headers + shared lib + static archive present" \
+		|| { echo "FAIL: dlib not installed correctly (missing headers, libdlib.so, or libdlib.a)"; exit 1; }
 
 lint: deps-hadolint #lint: @ Lint the Dockerfile with hadolint
 	@hadolint Dockerfile

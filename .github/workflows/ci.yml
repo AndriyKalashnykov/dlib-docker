@@ -108,16 +108,23 @@ jobs:
           ignore-unfixed: true
 
       # =================================================================
-      # GATE 3: smoke test — process-up + dlib headers/shared lib present.
-      # This is a utility container (CMD tail -f /dev/null); the check
-      # verifies the from-source build actually installed dlib under
-      # /usr/local. Matches the Makefile `make test` target.
+      # GATE 3: smoke test — process-up + dlib headers/shared lib/static
+      # archive present. This is a utility container (CMD tail -f /dev/null);
+      # the check verifies the from-source build actually installed dlib
+      # under /usr/local AND that both the shared library and static archive
+      # are available for downstream static-linked builds like
+      # go-face-recognition's -extldflags -static binary. Matches the
+      # Makefile `make test` target.
       # =================================================================
       - name: Smoke test
         run: |
           set -euo pipefail
-          docker run --rm dlib-docker:scan bash -c \
-            'test -f /usr/local/include/dlib/matrix.h && ls /usr/local/lib/libdlib.so*'
+          docker run --rm dlib-docker:scan bash -c '
+            set -euo pipefail
+            test -f /usr/local/include/dlib/matrix.h
+            ls /usr/local/lib/libdlib.so*
+            test -f /usr/local/lib/libdlib.a
+          '
 
       - name: Log in to GHCR
         uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0

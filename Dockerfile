@@ -27,19 +27,48 @@ RUN apt-get update && \
 
 # Build dlib from source at the pinned upstream tag. DLIB_VERSION must be
 # a released tag on davisking/dlib (e.g. "20.0.1", "19.24.9").
+#
+# dlib's CMakeLists does not emit both libdlib.so AND libdlib.a from a single
+# configure, so we configure+build+install twice with different BUILD_SHARED_LIBS
+# settings. Both artifacts land in /usr/local/lib side-by-side, which lets
+# downstream consumers choose dynamic OR static linking. Static linking is the
+# hard requirement for go-face-recognition's -extldflags -static build.
+#
+# CMAKE_POSITION_INDEPENDENT_CODE=ON on the static build makes libdlib.a PIC-safe
+# so it can be linked into shared objects and Go PIE binaries without runtime
+# relocations errors.
 RUN set -eux; \
     curl -fsSL "https://github.com/davisking/dlib/archive/refs/tags/v${DLIB_VERSION}.tar.gz" -o /tmp/dlib.tar.gz; \
     tar -xzf /tmp/dlib.tar.gz -C /tmp; \
-    cmake -S "/tmp/dlib-${DLIB_VERSION}" -B "/tmp/dlib-${DLIB_VERSION}/build" \
+    # --- pass 1: shared library (libdlib.so + headers + cmake package) ---
+    cmake -S "/tmp/dlib-${DLIB_VERSION}" -B "/tmp/dlib-${DLIB_VERSION}/build-shared" \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/usr/local \
         -DBUILD_SHARED_LIBS=ON \
+        -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
         -DDLIB_USE_BLAS=ON \
         -DDLIB_USE_LAPACK=ON; \
-    cmake --build "/tmp/dlib-${DLIB_VERSION}/build" -j"$(nproc)"; \
-    cmake --install "/tmp/dlib-${DLIB_VERSION}/build"; \
+    cmake --build "/tmp/dlib-${DLIB_VERSION}/build-shared" -j"$(nproc)"; \
+    cmake --install "/tmp/dlib-${DLIB_VERSION}/build-shared"; \
+    # --- pass 2: static archive (libdlib.a) ---
+    cmake -S "/tmp/dlib-${DLIB_VERSION}" -B "/tmp/dlib-${DLIB_VERSION}/build-static" \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr/local \
+        -DBUILD_SHARED_LIBS=OFF \
+        -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+        -DDLIB_USE_BLAS=ON \
+        -DDLIB_USE_LAPACK=ON; \
+    cmake --build "/tmp/dlib-${DLIB_VERSION}/build-static" -j"$(nproc)"; \
+    cmake --install "/tmp/dlib-${DLIB_VERSION}/build-static"; \
     ldconfig; \
     rm -rf "/tmp/dlib.tar.gz" "/tmp/dlib-${DLIB_VERSION}"
+
+# /usr/local/lib is in /etc/ld.so.conf.d/libc.conf (so the runtime linker finds
+# libdlib.so via ldconfig), but it is NOT in the *static* linker's compiled-in
+# default search path on Debian/Ubuntu. Exporting LIBRARY_PATH here makes
+# `ld -ldlib` resolve to /usr/local/lib/libdlib.a during downstream builds
+# without needing every downstream Dockerfile to duplicate this knowledge.
+ENV LIBRARY_PATH=/usr/local/lib
 
 RUN userdel -r ubuntu 2>/dev/null || true && \
     groupadd --gid 1000 appuser && \
